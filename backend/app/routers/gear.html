@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gear Icon</title>
+    <!--
+        The <style> block contains CSS rules to style the HTML document
+        and the SVG icon.
+    -->
+    <style>
+        /* Basic body styling to center the icon on the page */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Full viewport height */
+            margin: 0; /* Remove default body margin */
+            background-color: #ffffff; /* White background as seen in the image */
+            overflow: hidden; /* Prevent scrollbars if icon is too large */
+        }
+
+        /* Styling for the SVG container */
+        .gear-icon {
+            width: 200px; /* Set a fixed width for the icon */
+            height: 200px; /* Set a fixed height for the icon */
+            /* The viewBox attribute in the SVG ensures it scales correctly */
+
+            /* Optional: Add a subtle animation to make the gear rotate */
+            /* animation: rotate 10s linear infinite; */
+        }
+
+        /* Optional: Keyframe animation for rotation */
+        /* @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        } */
+    </style>
+</head>
+<body>
+
+    <!--
+        SVG (Scalable Vector Graphics) is used to create the gear icon.
+        SVG is ideal for vector graphics as it scales without pixelation
+        and can be styled with CSS.
+
+        The icon is constructed using a combination of shapes:
+        1. A main circular body.
+        2. Multiple rotated rectangular shapes for the teeth.
+        3. A central circular mask to create the cutout hole.
+    -->
+    <svg class="gear-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <!--
+            The <defs> element is used to define reusable SVG objects.
+            These objects are not rendered directly but can be referenced
+            later using the <use> element.
+        -->
+        <defs>
+            <!-- Define a single gear tooth as a rectangle -->
+            <!--
+                x="44", y="15": Positions the top-left corner of the rectangle.
+                                Centered horizontally (50 - 12/2 = 44).
+                                Vertically positioned to start at the outer edge
+                                of the main gear body (50 - 35 = 15).
+                width="12", height="10": Dimensions of the tooth.
+            -->
+            <rect id="gear-tooth" x="44" y="15" width="12" height="10" />
+
+            <!--
+                Group all the solid parts of the gear (body + teeth) into one <g> element.
+                This group will then be masked to create the central hole.
+            -->
+            <g id="full-gear-shape">
+                <!-- Main circular body of the gear -->
+                <!-- cx, cy: Center coordinates (50, 50) -->
+                <!-- r: Radius (35) -->
+                <circle cx="50" cy="50" r="35" />
+
+                <!--
+                    Use the defined tooth shape and rotate it around the center (50,50).
+                    There are 10 teeth in the image, so each tooth is rotated by 360 / 10 = 36 degrees.
+                -->
+                <use href="#gear-tooth" transform="rotate(0 50 50)" />
+                <use href="#gear-tooth" transform="rotate(36 50 50)" />
+                <use href="#gear-tooth" transform="rotate(72 50 50)" />
+                <use href="#gear-tooth" transform="rotate(108 50 50)" />
+                <use href="#gear-tooth" transform="rotate(144 50 50)" />
+                <use href="#gear-tooth" transform="rotate(180 50 50)" />
+                <use href="#gear-tooth" transform="rotate(216 50 50)" />
+                <use href="#gear-tooth" transform="rotate(252 50 50)" />
+                <use href="#gear-tooth" transform="rotate(288 50 50)" />
+                <use href="#gear-tooth" transform="rotate(324 50 50)" />
+            </g>
+
+            <!--
+                Define a mask to create the central cutout.
+                In a mask:
+                - White areas are fully opaque (show the underlying element).
+                - Black areas are fully transparent (hide the underlying element).
+            -->
+            <mask id="gear-mask">
+                <!-- A white rectangle covering the entire viewBox makes everything initially visible -->
+                <rect x="0" y="0" width="100" height="100" fill="white" />
+                <!-- A black circle in the center creates a transparent hole -->
+                <circle cx="50" cy="50" r="20" fill="black" />
+            </mask>
+        </defs>
+
+        <!--
+            Render the full gear shape (body + teeth) and apply the mask to it.
+            The fill="black" ensures the visible parts of the gear are black.
+        -->
+        <use href="#full-gear-shape" fill="black" mask="url(#gear-mask)" />
+    </svg>
+
+</body>
+</html>

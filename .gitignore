@@ -1,15 +1,42 @@
 ﻿backend/db/*.db
 backend/db/*.db-shm
 backend/db/*.db-wal
+
 backend/app/services/weights/
+
 fix_*.py
 del_*.py
 bulk_*.py
 check_*.py
+
 __pycache__/
 *.pyc
+*.log
+
 node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+dist/
+build/
+
+.venv/
+venv/
+
 .env
 .env.*
+
 .DS_Store
 Thumbs.db
+
+# test outputs
+test-results/
+.pytest_cache/
+
+# images / large assets
+*.png
+*.jpg
+*.jpeg
+
+# optional
+tests/assets/

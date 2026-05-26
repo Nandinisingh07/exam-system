@@ -49,10 +49,14 @@ const Reports = () => {
         verified: 0,
         absent: 0,
         washroom: 0,
-        total: 0
+        total: 0,
+        invigilator_id: r.invigilator_id || null
       };
     }
 
+    if (!summaryGroup[key].invigilator_id && r.invigilator_id) {
+      summaryGroup[key].invigilator_id = r.invigilator_id;
+    }
     summaryGroup[key].total += 1;
     if (r.status === 'Verified' || r.status === 'Present') {
       summaryGroup[key].verified += 1;
@@ -200,7 +204,7 @@ const Reports = () => {
                       <div className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
-                  <button onClick={async () => { try { const res = await attendanceApi.exportInvigilatorWithAuth(inv.id, "pdf"); const url = window.URL.createObjectURL(new Blob([res.data], {type:"application/pdf"})); const a = document.createElement("a"); a.href=url; a.setAttribute("download", `attendance_${inv.name}.pdf`); document.body.appendChild(a); a.click(); a.remove(); window.URL.revokeObjectURL(url); } catch(e){ alert("Export failed: " + e.message); }}} className="btn-secondary text-xs py-2 px-3 flex items-center gap-1"><Download size={12} /> Export PDF</button>
+                  <button onClick={async () => { try { const res = await attendanceApi.exportInvigilatorWithAuth(inv.invigilator_id, "pdf"); const url = window.URL.createObjectURL(new Blob([res.data], {type:"application/pdf"})); const a = document.createElement("a"); a.href=url; a.setAttribute("download", `attendance_${inv.name}.pdf`); document.body.appendChild(a); a.click(); a.remove(); window.URL.revokeObjectURL(url); } catch(e){ alert("Export failed: " + e.message); }}} className="btn-secondary text-xs py-2 px-3 flex items-center gap-1"><Download size={12} /> Export PDF</button>
                 </div>
               </div>
             );

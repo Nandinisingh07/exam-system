@@ -1,3 +1,4 @@
+import AttendanceLogs from './pages/invigilator/AttendanceLogs';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
@@ -17,15 +18,6 @@ import InvigilatorKiosk from './pages/invigilator/Kiosk';
 import InvigilatorWashroom from './pages/invigilator/WashroomLog';
 import AdminInvigilators from './pages/admin/Invigilators';
 
-const AttendanceLogs = () => (
-  <div className="glass-card p-16 text-center animate-fade-slide">
-    <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center mx-auto mb-4">
-      <span className="text-2xl">📋</span>
-    </div>
-    <h2 className="text-xl font-bold text-white mb-2">Hall Attendance Roster</h2>
-    <p className="text-slate-400 text-sm">Navigate to the Verification Kiosk to begin marking attendance. Completed logs appear here.</p>
-  </div>
-);
 
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem('token');

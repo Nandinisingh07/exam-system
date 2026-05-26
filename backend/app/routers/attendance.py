@@ -41,6 +41,7 @@ def _build_records(db, exam_id=None, invigilator_id=None):
             "date":        r.marked_at.strftime("%d/%m/%Y") if r.marked_at else "-",
             "method":      f"{'Face+' if r.face_verified else ''}{'ID+' if r.id_verified else ''}OCR",
             "status":      r.status,
+            "invigilator_id": r.marked_by,
         })
     return result
 

@@ -87,7 +87,7 @@ const AttendanceLogs = () => {
           <div className="relative" ref={dropRef}>
             <button
               onClick={() => setShowFmt(v => !v)}
-              disabled={exporting || records.length === 0}
+              disabled={exporting}
               className="btn-secondary text-sm py-2.5 px-4 flex items-center gap-2"
             >
               <Download size={14} />

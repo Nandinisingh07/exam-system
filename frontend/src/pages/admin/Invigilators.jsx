@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserPlus, Search, Edit2, Trash2, Key, Users, CheckCircle, Plus } from 'lucide-react';
-
-const DEFAULT_INVIGILATORS = [
-  { id: 1, name: 'Shweta Agrawal', email: 'shweta@exam.com', password: 'pass', status: 'Active', created: '2026-05-01' },
-  { id: 2, name: 'Anita Sharma', email: 'anita@exam.com', password: 'pass', status: 'Active', created: '2026-05-02' },
-  { id: 3, name: 'Rajesh Kumar', email: 'rajesh@exam.com', password: 'pass', status: 'Active', created: '2026-05-03' },
-];
+import { authApi } from '../../services/api';
 
 const Invigilators = () => {
   const [invigilators, setInvigilators] = useState([]);
@@ -13,29 +8,47 @@ const Invigilators = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [newInvig, setNewInvig] = useState({ name: '', email: '', password: '' });
 
-  useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem('invigilators') || 'null');
-    if (!stored) {
-      localStorage.setItem('invigilators', JSON.stringify(DEFAULT_INVIGILATORS));
-      setInvigilators(DEFAULT_INVIGILATORS);
-    } else {
-      setInvigilators(stored);
+  const fetchInvigilators = async () => {
+    try {
+      const res = await authApi.listUsers();
+      const invigs = res.data.filter(u => u.role === 'invigilator').map(u => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        password: '••••••••',
+        status: u.is_active !== false ? 'Active' : 'Inactive',
+        created: 'Active Account'
+      }));
+      setInvigilators(invigs);
+    } catch (err) {
+      console.error(err);
     }
-  }, []);
-
-  const handleAdd = (e) => {
-    e.preventDefault();
-    const updated = [...invigilators, { ...newInvig, id: Date.now(), status: 'Active', created: new Date().toISOString().split('T')[0] }];
-    setInvigilators(updated);
-    localStorage.setItem('invigilators', JSON.stringify(updated));
-    setShowAdd(false);
-    setNewInvig({ name: '', email: '', password: '' });
   };
 
-  const handleDelete = (id) => {
-    const updated = invigilators.filter(i => i.id !== id);
-    setInvigilators(updated);
-    localStorage.setItem('invigilators', JSON.stringify(updated));
+  useEffect(() => {
+    fetchInvigilators();
+  }, []);
+
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    try {
+      await authApi.register(newInvig.name, newInvig.email, newInvig.password, 'invigilator');
+      setShowAdd(false);
+      setNewInvig({ name: '', email: '', password: '' });
+      fetchInvigilators();
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to register invigilator.');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this invigilator account?")) return;
+    try {
+      await authApi.deleteUser(id);
+      fetchInvigilators();
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to delete invigilator.');
+    }
   };
 
   const filtered = invigilators.filter(i => 

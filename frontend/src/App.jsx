@@ -45,6 +45,10 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<PrivateRoute><SmartRedirect /></PrivateRoute>} />
+        
+        {/* Redirects for bare root roles */}
+        <Route path="/admin" element={<Navigate to="/admin/overview" replace />} />
+        <Route path="/invigilator" element={<Navigate to="/invigilator/dashboard" replace />} />
 
         {/* Admin Routes */}
         <Route path="/admin/overview" element={<PrivateRoute><AdminOverview /></PrivateRoute>} />

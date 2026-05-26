@@ -7,10 +7,10 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend/exam_system.db:/app/exam_system.db
+      - ./backend/db:/app/db
       - ./backend/uploads:/app/uploads
     environment:
-      - DATABASE_URL=sqlite:///./exam_system.db
+      - DATABASE_URL=sqlite:///./db/exam_system.db
       - SECRET_KEY=prod-secret-key-change-this
       - ALGORITHM=HS256
       - TESSERACT_CMD=/usr/bin/tesseract

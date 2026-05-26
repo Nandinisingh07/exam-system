@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Users, Calendar, UserCheck, AlertTriangle, TrendingUp, TrendingDown,
   ArrowUpRight, CheckCircle, Clock, Download, RefreshCw, Eye, MapPin,
-  FileBarChart, Zap, Activity, ShieldCheck, ShieldAlert, Droplets
+  FileBarChart, Zap, Activity, ShieldCheck, ShieldAlert, Droplets,
+  PieChart as PieChartIcon
 } from 'lucide-react';
 import { adminApi } from '../../services/api';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -95,10 +96,10 @@ export default function Overview() {
       
       setData({
         stats: [
-          { key:'students', title:'Total Students', raw:stats.students, display:stats.students.toLocaleString(), sub:'Registered in system', icon:Users, accent:'violet', trend:'up', tv:'+12%' },
-          { key:'exams', title:'Active Exams', raw:stats.exams, display:stats.exams.toString(), sub:'Ongoing right now', icon:Calendar, accent:'cyan', trend:'up', tv:'+2' },
-          { key:'verified', title:'Verified Today', raw:stats.verified, display:stats.verified.toString(), sub:`${vRate}% verification rate`, icon:UserCheck, accent:'emerald', trend:'up', tv:`${vRate}%`},
-          { key:'alerts', title:'Active Alerts', raw:stats.alerts, display:stats.alerts.toString(), sub:'Require attention', icon:AlertTriangle, accent:'rose', trend:stats.alerts>0?'up':'down', tv:stats.alerts>0?`+${stats.alerts}`:'0' },
+          { key:'students', title:'Total Students', raw:stats.students, display:(stats.students ?? 0).toLocaleString(), sub:'Registered in system', icon:Users, accent:'violet', trend:'up', tv:'+12%' },
+          { key:'exams', title:'Active Exams', raw:stats.exams, display:(stats.exams ?? 0).toString(), sub:'Ongoing right now', icon:Calendar, accent:'cyan', trend:'up', tv:'+2' },
+          { key:'verified', title:'Verified Today', raw:stats.verified, display:(stats.verified ?? 0).toString(), sub:`${vRate}% verification rate`, icon:UserCheck, accent:'emerald', trend:'up', tv:`${vRate}%`},
+          { key:'alerts', title:'Active Alerts', raw:stats.alerts, display:(stats.alerts ?? 0).toString(), sub:'Require attention', icon:AlertTriangle, accent:'rose', trend:stats.alerts>0?'up':'down', tv:stats.alerts>0?`+${stats.alerts}`:'0' },
         ],
         attendance: d.attendance || [],
         verify_data: d.verify_data || [],
@@ -213,7 +214,7 @@ export default function Overview() {
              <div className="section-card p-5">
                 <div className="flex items-center justify-between mb-6">
                    <h3 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                      <PieChart size={14} className="text-cyan-400" />
+                      <PieChartIcon size={14} className="text-cyan-400" />
                       Status Distribution
                    </h3>
                 </div>

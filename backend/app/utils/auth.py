@@ -1,28 +1,32 @@
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..models.user import User
+from ..models.user import User, UserRole
 from ..config import settings
 from ..utils import metrics
 import bcrypt
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+
 
 def hash_password(password: str) -> str:
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return bcrypt.checkpw(plain.encode('utf-8'), hashed.encode('utf-8'))
+    return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
+
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
@@ -37,12 +41,25 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             raise credentials_exception
     except JWTError:
         raise credentials_exception
+
     user = db.query(User).filter(User.email == email).first()
     if user is None:
         raise credentials_exception
     return user
 
+
 def require_admin(current_user: User = Depends(get_current_user)):
-    if current_user.role != "admin":
+    # FIX: role is a UserRole enum — compare correctly against both enum and string forms
+    role = current_user.role
+    role_str = role.value if hasattr(role, "value") else str(role)
+    if role_str != "admin" and role != UserRole.admin:
         raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
+
+
+def require_invigilator(current_user: User = Depends(get_current_user)):
+    role = current_user.role
+    role_str = role.value if hasattr(role, "value") else str(role)
+    if role_str not in ("admin", "invigilator") and role not in (UserRole.admin, UserRole.invigilator):
+        raise HTTPException(status_code=403, detail="Invigilator or admin access required")
     return current_user

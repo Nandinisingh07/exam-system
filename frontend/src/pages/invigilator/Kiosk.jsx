@@ -1,437 +1,1048 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Camera, ShieldCheck, User, CreditCard, FileText,
   CheckCircle, XCircle, RefreshCcw, Loader2, Scan,
-  AlertTriangle, ChevronRight, Clock, Zap, Eye,
-  Activity, BarChart3, ThumbsUp, ThumbsDown
+  AlertTriangle, ChevronRight, Clock, Zap, Activity,
+  ThumbsUp, Play, UserPlus, X, Ban, PenLine
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
-import { verificationApi, logisticsApi } from '../../services/api';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+function getToken() {
+  return localStorage.getItem('token') || '';
+}
+
+async function apiPost(path, body) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    // FastAPI 422 returns detail as array of objects — flatten to string
+    const detail = data.detail;
+    if (Array.isArray(detail)) {
+      const msg = detail.map(e => `${e.loc?.slice(-1)?.[0] ?? 'field'}: ${e.msg}`).join(', ');
+      throw new Error(msg);
+    }
+    throw new Error(typeof detail === 'string' ? detail : `HTTP ${res.status}`);
+  }
+  return data;
+}
+
+async function apiGet(path) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// Capture a JPEG frame from a <video> element.
+// Returns base64 string (no prefix) or null if frame is blank/not ready.
+function captureFrame(videoEl, quality = 0.92) {
+  if (!videoEl) return null;
+  const w = videoEl.videoWidth;
+  const h = videoEl.videoHeight;
+  if (!w || !h) return null;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(videoEl, 0, 0, w, h);
+
+  const px = ctx.getImageData(0, 0, 16, 16).data;
+  const avg = Array.from(px).reduce((s, v, i) => i % 4 < 3 ? s + v : s, 0) / (16 * 16 * 3);
+  if (avg < 8) return null;
+
+  const dataUrl = canvas.toDataURL('image/jpeg', quality);
+  return dataUrl.split(',')[1];
+}
+
+// Captures 8 frames over 800ms, returns the sharpest one.
+// flipH=true for card scanning (un-mirrors the display flip).
+async function captureSharpestFrame(videoEl, quality = 0.92, flipH = false) {
+  if (!videoEl) return null;
+  const w = videoEl.videoWidth;
+  const h = videoEl.videoHeight;
+  if (!w || !h) return null;
+
+  const frames = [];
+  for (let i = 0; i < 8; i++) {
+    await new Promise(r => setTimeout(r, 100));
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (flipH) {
+      ctx.translate(w, 0);
+      ctx.scale(-1, 1);
+    }
+    ctx.drawImage(videoEl, 0, 0, w, h);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    // Reject blank frames
+    const px = ctx.getImageData(0, 0, 16, 16).data;
+    const avg = Array.from(px).reduce((s, v, i) => i % 4 < 3 ? s + v : s, 0) / (16 * 16 * 3);
+    if (avg < 8) continue;
+
+    // Sharpness = variance of grayscale in center crop
+    const cx = Math.floor(w * 0.2), cy = Math.floor(h * 0.2);
+    const cw = Math.floor(w * 0.6), ch = Math.floor(h * 0.6);
+    const data = ctx.getImageData(cx, cy, cw, ch).data;
+    let mean = 0, count = 0;
+    const gray = [];
+    for (let p = 0; p < data.length; p += 4) {
+      const g = 0.299 * data[p] + 0.587 * data[p + 1] + 0.114 * data[p + 2];
+      gray.push(g); mean += g; count++;
+    }
+    mean /= count;
+    const sharpness = gray.reduce((s, v) => s + (v - mean) ** 2, 0) / count;
+
+    frames.push({ b64: canvas.toDataURL('image/jpeg', quality).split(',')[1], sharpness });
+  }
+
+  if (!frames.length) return null;
+  frames.sort((a, b) => b.sharpness - a.sharpness);
+  console.log('[OCR] Sharpness scores:', frames.map(f => f.sharpness.toFixed(1)));
+  return frames[0].b64;
+}
+
+// Wait for video to have real pixels
+async function waitForVideoReady(videoEl, maxMs = 5000) {
+  const start = Date.now();
+  while (Date.now() - start < maxMs) {
+    if (videoEl.videoWidth > 0 && videoEl.readyState >= 2) {
+      const frame = captureFrame(videoEl);
+      if (frame) return true;
+    }
+    await new Promise(r => setTimeout(r, 100));
+  }
+  return false;
+}
+
+// ─── Step badge ──────────────────────────────────────────────────────────────
 
 const STEPS = [
-  { id: 1, name: 'Ready',      desc: 'Initialize verification', icon: Zap },
-  { id: 2, name: 'Face Scan',  desc: 'Biometric face match',    icon: User },
-  { id: 3, name: 'Admit Card', desc: 'OCR document scan',       icon: FileText },
-  { id: 4, name: 'ID Card',    desc: 'Photo ID verification',   icon: CreditCard },
-  { id: 5, name: 'Result',     desc: 'Verification complete',   icon: ShieldCheck },
+  { id: 1, label: 'Face Scan', icon: User, desc: 'Biometric face match' },
+  { id: 2, label: 'Admit Card', icon: FileText, desc: 'OCR document scan' },
+  { id: 3, label: 'ID Card', icon: CreditCard, desc: 'Photo ID verification' },
+  { id: 4, label: 'Result', icon: CheckCircle, desc: 'Verification complete' },
 ];
 
-// Confidence bar component
-const ScoreBar = ({ label, score, color = 'indigo' }) => {
-  const pct = Math.min(Math.max(score || 0, 0), 100);
-  const colorMap = {
-    indigo: 'from-indigo-500 to-violet-500',
-    green:  'from-emerald-500 to-teal-500',
-    amber:  'from-amber-500 to-orange-500',
-    rose:   'from-rose-500 to-red-500',
-    sky:    'from-sky-500 to-blue-500',
-  };
-  const barColor = pct >= 85 ? 'green' : pct >= 68 ? 'amber' : 'rose';
+function StepBadge({ step, current, done, error }) {
+  const Icon = step.icon;
+  const active = step.id === current;
+  const bg = done
+    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+    : error
+      ? 'bg-rose-500/20 border-rose-500 text-rose-400'
+      : active
+        ? 'bg-violet-500/20 border-violet-500 text-violet-300'
+        : 'bg-slate-800 border-slate-700 text-slate-500';
+
   return (
-    <div>
-      <div className="flex justify-between mb-1">
-        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{label}</span>
-        <span className={`text-[10px] font-black ${pct >= 85 ? 'text-emerald-400' : pct >= 68 ? 'text-amber-400' : 'text-rose-400'}`}>
-          {pct.toFixed(1)}%
-        </span>
-      </div>
-      <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
-        <div
-          className={`h-full bg-gradient-to-r ${colorMap[barColor]} rounded-full transition-all duration-700`}
-          style={{ width: `${pct}%` }}
-        />
+    <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${bg} transition-all duration-300`}>
+      {done ? <CheckCircle size={15} className="text-emerald-400" />
+        : error ? <XCircle size={15} className="text-rose-400" />
+          : <Icon size={15} />}
+      <div>
+        <div className="text-[11px] font-semibold">{step.label}</div>
+        <div className="text-[10px] opacity-60">{step.desc}</div>
       </div>
     </div>
   );
-};
+}
 
-const Kiosk = () => {
-  const [step, setStep]         = useState(1);
-  const [loading, setLoading]   = useState(false);
-  const [result, setResult]     = useState(null);
-  const [error, setError]       = useState('');
-  const [examId, setExamId]     = useState(null);
-  const [exams, setExams]       = useState([]);
-  const [intermediate, setIntermediate] = useState({});
+// ─── Webcam panel ────────────────────────────────────────────────────────────
 
-  const videoRef  = useRef(null);
-  const canvasRef = useRef(null);
-  const streamRef = useRef(null);
+function WebcamPanel({ videoRef, streamActive, label }) {
+  return (
+    <div className="relative rounded-2xl overflow-hidden bg-slate-900 border border-slate-700"
+      style={{ height: '420px' }}>
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className="w-full h-full object-cover"
+        style={{ transform: 'scaleX(-1)' }}
+      />
+      {/* Animated scan ring */}
+      {streamActive && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-40 h-48 rounded-[50%] border-2 border-violet-400/60"
+            style={{ boxShadow: '0 0 20px rgba(124,58,237,0.4)', animation: 'pulse 2s infinite' }} />
+        </div>
+      )}
+      {!streamActive && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80">
+          <div className="text-center">
+            <Camera size={40} className="text-slate-600 mx-auto mb-2" />
+            <p className="text-slate-500 text-sm">Camera initializing…</p>
+          </div>
+        </div>
+      )}
+      {label && (
+        <div className="absolute bottom-2 left-2 right-2 text-center">
+          <span className="text-[10px] font-mono text-violet-300 bg-slate-900/70 px-2 py-1 rounded-md">
+            {label}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
 
+// ─── Face Registration Modal ─────────────────────────────────────────────────
+
+// ─── Fast Bulk Registration Modal ────────────────────────────────────────────
+// Drop this in to replace the existing RegisterModal in Kiosk.jsx
+//
+// WHAT'S DIFFERENT:
+//   • Auto-advances to next unregistered student after each success
+//   • SPACE or ENTER = capture + register in one shot (no separate buttons)
+//   • Shows "12 / 70 done" progress so you know where you are
+//   • Skips already-registered students (shown in green, can still re-do)
+//   • Keyboard-first: never need to touch the mouse
+
+function RegisterModal({ students, videoRef, onClose, onSuccess }) {
+  const [queue, setQueue] = React.useState([]); // ordered list of students
+  const [idx, setIdx] = React.useState(0);  // current index in queue
+  const [doneIds, setDoneIds] = React.useState(new Set());
+  const [status, setStatus] = React.useState('idle'); // idle | capturing | registering | success | error
+  const [message, setMessage] = React.useState('');
+  const [registered, setRegistered] = React.useState(0);
+  const inputRef = React.useRef(null);
+
+  // Build queue on mount — unregistered first, then registered
+  React.useEffect(() => {
+    const unregistered = students.filter(s => !s.face_encoding);
+    const alreadyDone = students.filter(s => s.face_encoding);
+    setQueue([...unregistered, ...alreadyDone]);
+    setRegistered(alreadyDone.length);
+  }, [students]);
+
+  // Focus trap for keyboard
+  React.useEffect(() => {
+    inputRef.current?.focus();
+  }, [idx, queue]);
+
+  // Keyboard handler
+  React.useEffect(() => {
+    function onKey(e) {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        if (status === 'idle' || status === 'error') handleCaptureAndRegister();
+      }
+      if (e.key === 'ArrowRight' || e.key === 'n') goNext();
+      if (e.key === 'ArrowLeft' || e.key === 'p') goPrev();
+      if (e.key === 'Escape') onClose();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [status, idx, queue]);
+
+  const current = queue[idx];
+  const total = students.length;
+
+  function goNext() {
+    setIdx(i => Math.min(i + 1, queue.length - 1));
+    setStatus('idle');
+    setMessage('');
+  }
+  function goPrev() {
+    setIdx(i => Math.max(i - 1, 0));
+    setStatus('idle');
+    setMessage('');
+  }
+
+  async function handleCaptureAndRegister() {
+    if (!current) return;
+    setStatus('capturing');
+    setMessage('Capturing...');
+
+    const frame = captureFrame(videoRef.current);
+    if (!frame) {
+      setStatus('error');
+      setMessage('No frame — wait for camera then press Space again');
+      return;
+    }
+
+    setStatus('registering');
+    setMessage('Registering...');
+
+    try {
+      const res = await apiPost('/api/verify/register-face', {
+        student_id: current.id,
+        face_images_b64: [frame],
+      });
+
+      setDoneIds(prev => new Set([...prev, current.id]));
+      setRegistered(prev => prev + (doneIds.has(current.id) ? 0 : 1));
+      setStatus('success');
+      setMessage(`Done — ${res.student_name}`);
+      onSuccess?.(res);
+
+      // Auto-advance after 800ms
+      setTimeout(() => {
+        if (idx < queue.length - 1) {
+          goNext();
+        } else {
+          setMessage('All students registered!');
+        }
+      }, 800);
+
+    } catch (e) {
+      setStatus('error');
+      setMessage(e.message);
+    }
+  }
+
+  if (!queue.length) return null;
+
+  const pct = Math.round((registered / total) * 100);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+      onClick={e => e.target === e.currentTarget && onClose()}>
+
+      {/* invisible focus target for keyboard */}
+      <button ref={inputRef} style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }} />
+
+      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm shadow-2xl">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-2">
+            <UserPlus size={18} className="text-violet-400" />
+            <span className="font-bold text-white text-sm">Bulk Face Registration</span>
+          </div>
+          <button onClick={onClose} className="text-slate-500 hover:text-white">
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Progress bar */}
+        <div className="px-5 pt-3 pb-2">
+          <div className="flex justify-between text-xs mb-1.5">
+            <span className="text-slate-400">Progress</span>
+            <span className="text-white font-mono font-medium">{registered} / {total} registered</span>
+          </div>
+          <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: pct + '%', background: pct === 100 ? '#10b981' : '#7c3aed' }}
+            />
+          </div>
+        </div>
+
+        {/* Current student card */}
+        <div className="px-5 py-4">
+          <div className={`rounded-xl border p-4 mb-4 transition-all ${doneIds.has(current?.id)
+            ? 'border-emerald-500/40 bg-emerald-500/10'
+            : 'border-slate-700 bg-slate-800'
+            }`}>
+            <div className="flex items-center justify-between mb-0.5">
+              <span className="text-white font-semibold text-sm">{current?.name}</span>
+              {doneIds.has(current?.id) && (
+                <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full">
+                  Registered
+                </span>
+              )}
+            </div>
+            <span className="text-slate-400 text-xs font-mono">{current?.enrollment_no}</span>
+          </div>
+
+          {/* Big action button */}
+          <button
+            onClick={handleCaptureAndRegister}
+            disabled={status === 'capturing' || status === 'registering'}
+            className={`w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${status === 'success'
+              ? 'bg-emerald-600 text-white'
+              : status === 'error'
+                ? 'bg-rose-600/80 hover:bg-rose-600 text-white'
+                : status === 'capturing' || status === 'registering'
+                  ? 'bg-violet-700/50 text-white cursor-wait'
+                  : 'bg-violet-600 hover:bg-violet-500 active:scale-[0.98] text-white'
+              }`}
+          >
+            {status === 'capturing' && <><Loader2 size={16} className="animate-spin" /> Capturing...</>}
+            {status === 'registering' && <><Loader2 size={16} className="animate-spin" /> Saving...</>}
+            {status === 'success' && <><CheckCircle size={16} /> Registered — next in 0.8s</>}
+            {status === 'error' && <><AlertTriangle size={16} /> Retry (Space)</>}
+            {status === 'idle' && <><Camera size={16} /> Capture &amp; Register</>}
+          </button>
+
+          {message && status === 'error' && (
+            <p className="text-rose-400 text-xs mt-2 text-center">{message}</p>
+          )}
+
+          {/* Nav */}
+          <div className="flex items-center justify-between mt-3">
+            <button
+              onClick={goPrev}
+              disabled={idx === 0}
+              className="flex items-center gap-1 text-xs text-slate-400 hover:text-white disabled:opacity-30 px-2 py-1"
+            >
+              ← Prev
+            </button>
+            <span className="text-xs text-slate-500">
+              {idx + 1} of {queue.length}
+            </span>
+            <button
+              onClick={goNext}
+              disabled={idx === queue.length - 1}
+              className="flex items-center gap-1 text-xs text-slate-400 hover:text-white disabled:opacity-30 px-2 py-1"
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+
+        {/* Keyboard hint */}
+        <div className="px-5 pb-4 text-center">
+          <p className="text-[11px] text-slate-600">
+            <kbd className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">Space</kbd> capture &nbsp;·&nbsp;
+            <kbd className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">←→</kbd> navigate &nbsp;·&nbsp;
+            <kbd className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">Esc</kbd> close
+          </p>
+        </div>
+
+        {/* Mini student list */}
+        <div className="border-t border-slate-800 max-h-36 overflow-y-auto">
+          {queue.map((s, i) => (
+            <button
+              key={s.id}
+              onClick={() => { setIdx(i); setStatus('idle'); setMessage(''); }}
+              className={`w-full flex items-center justify-between px-5 py-2 text-xs transition-colors
+                ${i === idx ? 'bg-violet-600/20 text-white' : 'text-slate-400 hover:bg-slate-800'}`}
+            >
+              <span>{s.name}</span>
+              <span className="flex items-center gap-2">
+                <span className="font-mono text-slate-500">{s.enrollment_no}</span>
+                {doneIds.has(s.id)
+                  ? <CheckCircle size={11} className="text-emerald-400" />
+                  : <div className="w-2.5 h-2.5 rounded-full border border-slate-600" />
+                }
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Kiosk Component ────────────────────────────────────────────────────
+
+export default function Kiosk() {
+  const videoRef = useRef(null);
+  const [streamActive, setStreamActive] = useState(false);
+  const [exams, setExams] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [examId, setExamId] = useState('');
+  const [step, setStep] = useState(0);    // 0=idle, 1=face, 2=admit, 3=id, 4=done
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null); // accumulated data
+  const [stepError, setStepError] = useState('');
+  const [showRegister, setShowRegister] = useState(false);
+  const [time, setTime] = useState(new Date());
+  const [showTerminate, setShowTerminate] = useState(false);
+  const [terminateReason, setTerminateReason] = useState('');
+  const [showManual, setShowManual] = useState(false);
+  const [manualEnrollment, setManualEnrollment] = useState('');
+  const [manualError, setManualError] = useState('');
+  const [manualLoading, setManualLoading] = useState(false);
+
+  // Clock
   useEffect(() => {
-    logisticsApi.getExams()
-      .then(res => {
-        setExams(res.data);
-        if (res.data.length > 0) setExamId(res.data[0].id);
-      })
-      .catch(() => {});
+    const t = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(t);
   }, []);
 
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
-      streamRef.current = null;
-    }
-  };
-
-  const startCamera = async () => {
-    stopCamera();
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: 1280, height: 720 }
-      });
-      streamRef.current = stream;
-      if (videoRef.current) videoRef.current.srcObject = stream;
-    } catch {
-      setError('Camera access denied. Check browser permissions.');
-    }
-  };
-
+  // Webcam
   useEffect(() => {
-    if (step >= 2 && step <= 4) startCamera();
-    else stopCamera();
-    return stopCamera;
-  }, [step]);
-
-  const capturePhoto = () => {
-    if (!videoRef.current || !canvasRef.current) return '';
-    const canvas = canvasRef.current;
-    const video  = videoRef.current;
-    canvas.width  = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
-  };
-
-  const captureAndAdvance = async () => {
-    if (!examId) { alert('Please select an ongoing exam first.'); return; }
-    const b64 = capturePhoto();
-    setLoading(true);
-    setError('');
-
-    try {
-      if (step === 2) {
-        const res = await verificationApi.verifyFace({ exam_id: examId, face_image_b64: b64 });
-        setIntermediate(res.data);
-        setStep(3);
-      } else if (step === 3) {
-        const res = await verificationApi.verifyAdmit({ student_id: intermediate.student_id, admit_card_b64: b64 });
-        setIntermediate(prev => ({ ...prev, ...res.data }));
-        setStep(4);
-      } else if (step === 4) {
-        stopCamera();
-        setStep(5);
-        const res = await verificationApi.verifyId({
-          exam_id: examId,
-          student_id: intermediate.student_id,
-          id_card_b64: b64,
-          face_score: intermediate.face_score,
-          liveness_score: intermediate.liveness_score,
-          enrollment_score: intermediate.enrollment_score,
-          name_score: intermediate.name_score,
-          father_name_score: intermediate.father_name_score
+    let stream;
+    (async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+          audio: false,
         });
-        setResult(res.data);
-        if (res.data.verified && res.data.decision === 'AUTO_APPROVE') {
-          confetti({
-            particleCount: 130,
-            spread: 80,
-            origin: { y: 0.5 },
-            colors: ['#6366f1', '#10b981', '#f59e0b']
-          });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.onloadedmetadata = () => setStreamActive(true);
         }
+      } catch (e) {
+        console.error('Camera error:', e);
       }
-    } catch (err) {
-      stopCamera();
-      setStep(5);
-      const detail = err.response?.data?.detail || 'Verification failed.';
-      setError(detail);
-      setResult({ verified: false, decision: 'REJECT' });
+    })();
+    return () => stream?.getTracks().forEach(t => t.stop());
+  }, []);
+
+  // Load exams + students
+  useEffect(() => {
+    apiGet('/api/logistics/exams').then(setExams).catch(console.error);
+    apiGet('/api/students').then(setStudents).catch(() => setStudents([]));
+  }, []);
+
+  function resetKiosk() {
+    setStep(0);
+    setResult(null);
+    setStepError('');
+    setLoading(false);
+  }
+
+  async function handleStart() {
+    if (!examId) { setStepError('Please select an exam first'); return; }
+    setStep(1);
+    setStepError('');
+    setResult(null);
+  }
+
+  // ── Step 1: Face scan ──────────────────────────────────────────────────────
+  async function handleScanFace() {
+    setLoading(true);
+    setStepError('');
+    try {
+      const ready = await waitForVideoReady(videoRef.current, 5000);
+      if (!ready) throw new Error('Camera not ready — please wait a moment and try again');
+
+      const frame = captureFrame(videoRef.current);
+      if (!frame) throw new Error('Could not capture frame — ensure camera is working');
+
+      const data = await apiPost('/api/verify/step-face', {
+        exam_id: parseInt(examId),
+        face_image_b64: frame,
+      });
+
+      setResult(prev => ({ ...prev, ...data }));
+      setStep(2);
+    } catch (e) {
+      setStepError(e.message);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const resetKiosk = () => {
-    setStep(1);
-    setResult(null);
-    setError('');
-    setLoading(false);
-    setIntermediate({});
-    stopCamera();
-  };
+  // ── Step 2: Admit card ────────────────────────────────────────────────────
+  async function handleScanAdmit() {
+    setLoading(true);
+    setStepError('');
+    try {
+      if (!result?.student_id) throw new Error('Student not identified — please restart from Step 1');
 
-  const isManualReview = result?.decision === 'MANUAL_REVIEW';
+      const ready = await waitForVideoReady(videoRef.current, 5000);
+      if (!ready) throw new Error('Camera not ready');
+
+      setStepError('Hold admit card flat and still…');
+      const frame = await captureSharpestFrame(videoRef.current, 0.92, false);
+      setStepError('');
+      if (!frame) throw new Error('Could not capture frame — check camera');
+
+      const payload = {
+        exam_id: parseInt(examId),
+        student_id: result?.student_id,
+        admit_image_b64: frame,
+      };
+      console.log('[DEBUG] step-admit payload:', {
+        exam_id: payload.exam_id,
+        student_id: payload.student_id,
+        admit_image_b64_len: payload.admit_image_b64?.length,
+      });
+      if (!payload.student_id || isNaN(payload.exam_id)) {
+        throw new Error(`Bad payload — student_id=${payload.student_id} exam_id=${payload.exam_id}`);
+      }
+      const data = await apiPost('/api/verify/step-admit', payload);
+
+      setResult(prev => ({ ...prev, ...data }));
+      setStep(3);
+    } catch (e) {
+      setStepError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ── Step 3: ID card ───────────────────────────────────────────────────────
+  async function handleScanID() {
+    setLoading(true);
+    setStepError('');
+    try {
+      if (!result?.student_id) throw new Error('Student not identified — please restart from Step 1');
+
+      const ready = await waitForVideoReady(videoRef.current, 5000);
+      if (!ready) throw new Error('Camera not ready');
+      setStepError('Hold ID card flat and still…');
+      const frame = await captureSharpestFrame(videoRef.current, 0.92, false);
+      setStepError('');
+      if (!frame) throw new Error('Could not capture frame — check camera');
+
+      const data = await apiPost('/api/verify/step-id', {
+        exam_id: parseInt(examId),
+        student_id: result.student_id,
+        id_image_b64: frame,
+      });
+
+      setResult(prev => ({ ...prev, ...data }));
+      setStep(4);
+    } catch (e) {
+      setStepError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+  // ── Terminate session ────────────────────────────────────────────────────
+  function handleTerminate() {
+    if (!terminateReason.trim()) return;
+    console.warn(`[Kiosk] Session terminated. Reason: ${terminateReason}`);
+    setShowTerminate(false);
+    setTerminateReason('');
+    resetKiosk();
+  }
+
+  // ── Manual entry override ────────────────────────────────────────────────
+  async function handleManualEntry() {
+    if (!manualEnrollment.trim()) { setManualError('Enter enrollment number'); return; }
+    setManualLoading(true);
+    setManualError('');
+    try {
+      const all = await apiGet('/api/students');
+      const normalized = manualEnrollment.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      const found = all.find(s =>
+        s.enrollment_no.replace(/[^A-Za-z0-9]/g, '').toUpperCase() === normalized
+      );
+      if (!found) throw new Error(`No student found with enrollment: ${manualEnrollment}`);
+      // Inject student into result and skip to step 2
+      setResult({ student_id: found.id, student_name: found.name, enrollment_no: found.enrollment_no, confidence: 0, manual_override: true });
+      setShowManual(false);
+      setManualEnrollment('');
+      setStep(2);
+    } catch (e) {
+      setManualError(e.message);
+    } finally {
+      setManualLoading(false);
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+  const stepDone = id => step > id || (id === 4 && step === 4);
+  const stepErr = id => stepError && step === id;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] animate-fade-slide">
-      <canvas ref={canvasRef} hidden />
+    <div className="min-h-screen bg-slate-950 text-white p-4 md:p-6">
+      {/* ── Terminate Session Modal ───────────────────────────────────────── */}
+      {showTerminate && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-rose-500/40 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+            <div className="flex items-center gap-2 mb-1">
+              <Ban size={18} className="text-rose-400" />
+              <span className="font-bold text-white">Terminate Session</span>
+            </div>
+            <p className="text-slate-400 text-xs mb-4">
+              This will cancel the current verification and reset the kiosk. Provide a reason for the log.
+            </p>
+            <textarea
+              autoFocus
+              value={terminateReason}
+              onChange={e => setTerminateReason(e.target.value)}
+              placeholder="e.g. Student left, camera failure, wrong exam..."
+              rows={3}
+              className="w-full bg-slate-800 border border-slate-600 text-white rounded-xl px-3 py-2 text-sm mb-4 resize-none focus:outline-none focus:border-rose-500"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setShowTerminate(false); setTerminateReason(''); }}
+                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl text-sm text-slate-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleTerminate}
+                disabled={!terminateReason.trim()}
+                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 disabled:opacity-40 text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
+              >
+                <Ban size={14} /> Terminate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Manual Entry Modal ────────────────────────────────────────────── */}
+      {showManual && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-amber-500/40 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <PenLine size={18} className="text-amber-400" />
+                <span className="font-bold text-white">Manual Entry Override</span>
+              </div>
+              <button onClick={() => { setShowManual(false); setManualEnrollment(''); setManualError(''); }}
+                className="text-slate-500 hover:text-white"><X size={16} /></button>
+            </div>
+            <p className="text-slate-400 text-xs mb-4">
+              Use only when face scan fails (injury, camera issue). This is logged as a manual override.
+            </p>
+            <input
+              autoFocus
+              type="text"
+              value={manualEnrollment}
+              onChange={e => setManualEnrollment(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleManualEntry()}
+              placeholder="e.g. 0818CL231046"
+              className="w-full bg-slate-800 border border-slate-600 text-white rounded-xl px-3 py-2.5 text-sm mb-2 focus:outline-none focus:border-amber-500 font-mono"
+            />
+            {manualError && <p className="text-rose-400 text-xs mb-3">{manualError}</p>}
+            <button
+              onClick={handleManualEntry}
+              disabled={manualLoading || !manualEnrollment.trim()}
+              className="w-full py-2.5 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
+            >
+              {manualLoading ? <><Loader2 size={14} className="animate-spin" /> Looking up...</> : <><PenLine size={14} /> Find & Continue</>}
+            </button>
+          </div>
+        </div>
+      )}
+      {showRegister && (
+        <RegisterModal
+          students={students}
+          videoRef={videoRef}
+          onClose={() => setShowRegister(false)}
+          onSuccess={() => { }}
+        />
+      )}
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs font-medium text-emerald-400 uppercase tracking-wider">Kiosk Active</span>
-          </div>
-          <h1 className="text-2xl font-bold text-white">Entry Verification Terminal</h1>
-          <p className="text-sm text-slate-400 mt-0.5">Face + Admit Card + ID Card — AI confidence scoring</p>
+          <h1 className="text-xl font-bold text-white flex items-center gap-2">
+            <ShieldCheck size={22} className="text-violet-400" />
+            Entry Verification Terminal
+          </h1>
+          <p className="text-slate-400 text-xs mt-0.5">
+            Face + Admit Card + ID Card — AI confidence scoring
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <select
-            className="seas-input py-1.5 text-xs w-56"
-            value={examId || ''}
-            onChange={e => setExamId(parseInt(e.target.value))}
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <div className="text-slate-300 font-mono text-sm">
+              {time.toLocaleTimeString()}
+            </div>
+            <div className="flex items-center gap-1 justify-end">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[10px] text-emerald-400">System Live</span>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowRegister(v => !v)}
+            className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-xs transition-colors
+    ${showRegister
+                ? 'bg-violet-600 border-violet-500 text-white'
+                : 'bg-slate-800 hover:bg-slate-700 border-slate-600 text-slate-300'
+              }`}
           >
-            {exams.map(e => (
-              <option key={e.id} value={e.id}>{e.subject_code} — {e.subject_name}</option>
-            ))}
-            {exams.length === 0 && <option>No exams scheduled</option>}
-          </select>
-          <button onClick={resetKiosk} className="btn-secondary text-xs py-2">
-            <RefreshCcw size={13} /> Reset
+            <UserPlus size={14} className={showRegister ? 'text-white' : 'text-violet-400'} />
+            <span className="hidden sm:inline">
+              {showRegister ? 'Close Registration' : 'Register Face'}
+            </span>
+            <span className="sm:hidden">
+              {showRegister ? 'Close' : 'Register'}
+            </span>
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Step tracker */}
-        <div className="lg:col-span-3 space-y-2">
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider px-1 mb-3">Verification Steps</p>
-          {STEPS.map(s => {
-            const Icon    = s.icon;
-            const isActive = step === s.id;
-            const isDone   = step > s.id;
-            return (
-              <div key={s.id} className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all duration-300 ${
-                isActive ? 'bg-indigo-500/10 border-indigo-500/30 shadow-lg shadow-indigo-500/5' :
-                isDone   ? 'bg-emerald-500/5 border-emerald-500/20' :
-                           'bg-white/[0.02] border-white/[0.05] opacity-60'
-              }`}>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  isActive ? 'bg-indigo-500 shadow-lg shadow-indigo-500/30' :
-                  isDone   ? 'bg-emerald-500/20' : 'bg-white/[0.05]'
-                }`}>
-                  {isDone ? <CheckCircle size={15} className="text-emerald-400" /> :
-                            <Icon size={15} className={isActive ? 'text-white' : 'text-slate-500'} />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-xs font-semibold ${isActive ? 'text-white' : isDone ? 'text-emerald-400' : 'text-slate-500'}`}>{s.name}</p>
-                  <p className="text-[10px] text-slate-600">{s.desc}</p>
-                </div>
-                {isActive && <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse flex-shrink-0" />}
-              </div>
-            );
-          })}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+        {/* Left — webcam + exam select */}
+        <div className="lg:col-span-3 flex flex-col gap-4">
+          <WebcamPanel
+            videoRef={videoRef}
+            streamActive={streamActive}
+            label={
+              step === 0 ? 'Waiting for exam selection'
+                : step === 1 ? 'Position face in oval — then click Scan Face'
+                  : step === 2 ? 'Hold ADMIT CARD clearly in frame — then scan'
+                    : step === 3 ? 'Hold ID CARD clearly in frame — then scan'
+                      : 'Verification complete'
+            }
+          />
+
+          {/* Exam select */}
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-4">
+            <label className="text-xs text-slate-400 mb-2 block font-medium uppercase tracking-wider">
+              Select Exam
+            </label>
+            <select
+              value={examId}
+              onChange={e => { setExamId(e.target.value); resetKiosk(); }}
+              disabled={loading}
+              className="w-full bg-slate-800 border border-slate-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500"
+            >
+              <option value="">— Choose exam —</option>
+              {exams.map(e => (
+                <option key={e.id} value={e.id}>{e.course_code} — {e.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* Main panel */}
-        <div className="lg:col-span-9">
-          <div className="glass-card overflow-hidden min-h-[520px] flex flex-col">
-            {/* Progress bar */}
-            <div className="w-full h-1 bg-white/[0.05]">
-              <div
-                className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-700"
-                style={{ width: `${Math.min(((step - 1) / 4) * 100, 100)}%` }}
+        {/* Right — steps + controls */}
+        <div className="lg:col-span-2 flex flex-col gap-4">
+          {/* Step indicators */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {STEPS.map(s => (
+              <StepBadge
+                key={s.id}
+                step={s}
+                current={step}
+                done={stepDone(s.id)}
+                error={stepErr(s.id)}
               />
-            </div>
+            ))}
+          </div>
 
-            <div className="flex-1 flex flex-col items-center justify-center p-10">
+          {/* Action panel */}
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-5 flex-1">
 
-              {/* STEP 1: Ready */}
-              {step === 1 && (
-                <div className="text-center max-w-md animate-fade-slide">
-                  <div className="relative w-32 h-32 mx-auto mb-8">
-                    <div className="absolute inset-0 rounded-full bg-indigo-500/10 animate-pulse" />
-                    <div className="w-32 h-32 rounded-full bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center relative">
-                      <Scan size={48} className="text-indigo-400" />
-                    </div>
+            {/* ── Idle ─────────────────────────────────────────── */}
+            {step === 0 && (
+              <div className="text-center py-8">
+                <Zap size={40} className="text-violet-400 mx-auto mb-3" />
+                <h2 className="text-lg font-bold mb-1">Ready to Verify</h2>
+                <p className="text-slate-400 text-sm mb-6">
+                  Select an exam above, then click Start Verification.
+                </p>
+                <button
+                  onClick={handleStart}
+                  disabled={!examId}
+                  className="px-8 py-3 bg-violet-600 hover:bg-violet-500 disabled:opacity-30 text-white rounded-2xl font-semibold flex items-center gap-2 mx-auto transition-all"
+                >
+                  <Play size={18} /> Start Verification
+                </button>
+                {stepError && (
+                  <p className="text-rose-400 text-sm mt-3">{stepError}</p>
+                )}
+              </div>
+            )}
+
+            {/* ── Step 1: Face ──────────────────────────────────── */}
+            {step === 1 && (
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <User size={18} className="text-violet-400" />
+                  <h2 className="font-bold">Step 1 of 3 — Face Biometric</h2>
+                </div>
+                <p className="text-slate-400 text-sm mb-5">
+                  Position face clearly in the oval guide, ensure good lighting,
+                  then click <strong className="text-white">Scan Face</strong>.
+                </p>
+
+                {stepError && (
+                  <div className="bg-rose-900/30 border border-rose-500/50 rounded-xl p-3 mb-4 flex items-start gap-2">
+                    <AlertTriangle size={16} className="text-rose-400 mt-0.5 shrink-0" />
+                    <p className="text-rose-300 text-sm">{stepError}</p>
                   </div>
-                  <h2 className="text-2xl font-bold text-white mb-2">Ready to Verify</h2>
-                  <p className="text-slate-400 mb-3 leading-relaxed">
-                    3-step AI verification: <strong className="text-white">Face</strong> →{' '}
-                    <strong className="text-white">Admit Card OCR</strong> →{' '}
-                    <strong className="text-white">ID Card</strong>
-                  </p>
-                  <p className="text-[11px] text-slate-600 mb-8">
-                    System performs liveness detection, field-level OCR extraction, fuzzy name/enrollment matching, and confidence scoring.
-                  </p>
-                  <button id="start-scan-btn" onClick={() => setStep(2)} className="btn-primary text-base px-10 py-4 shadow-2xl shadow-indigo-500/20">
-                    <Zap size={18} /> Start Verification
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleScanFace}
+                    disabled={loading}
+                    className="flex-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2 transition-all"
+                  >
+                    {loading
+                      ? <><Loader2 size={18} className="animate-spin" /> Scanning…</>
+                      : <><Scan size={18} /> Scan Face</>}
                   </button>
-                </div>
-              )}
-
-              {/* STEPS 2–4: Camera */}
-              {step >= 2 && step <= 4 && (
-                <div className="w-full max-w-2xl animate-fade-slide">
-                  <div className="text-center mb-5">
-                    <p className="text-sm font-semibold text-slate-300 mb-1">
-                      Step {step - 1} of 3 —{' '}
-                      {step === 2 ? '🔬 Face Biometric + Liveness' :
-                       step === 3 ? '📄 Admit Card OCR Scan' : '🪪 Photo ID Card Scan'}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {step === 2 ? 'Look directly at camera. System checks liveness automatically.' :
-                       step === 3 ? 'Hold admit card clearly — face the printed text toward camera.' :
-                                    'Hold college ID card facing the camera.'}
-                    </p>
-                  </div>
-
-                  <div className="relative w-full rounded-2xl overflow-hidden bg-black border border-white/[0.08] shadow-2xl">
-                    <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-indigo-400 to-transparent z-20 shadow-[0_0_12px_rgba(99,102,241,0.8)] animate-scan-line" />
-                    <video
-                      ref={videoRef}
-                      autoPlay playsInline muted
-                      className="w-full aspect-video object-cover"
-                    />
-                    {/* Guide overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      {step === 2
-                        ? <div className="w-56 h-72 border-2 border-dashed border-indigo-400/40 rounded-full" />
-                        : <div className="w-4/5 h-3/5 border-2 border-dashed border-amber-400/40 rounded-2xl" />}
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-5 z-20 flex items-center justify-center">
-                      <button
-                        id="capture-btn"
-                        onClick={captureAndAdvance}
-                        disabled={loading}
-                        className="w-16 h-16 bg-white hover:bg-indigo-50 active:scale-95 rounded-full shadow-2xl flex items-center justify-center transition-all disabled:opacity-50"
-                      >
-                        {loading ? <Loader2 size={28} className="text-slate-900 animate-spin" /> : <Camera size={28} className="text-slate-900" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 5: Result */}
-              {step === 5 && (
-                <div className="w-full max-w-xl animate-fade-slide">
-                  {loading ? (
-                    <div className="text-center py-12">
-                      <Loader2 size={48} className="text-indigo-500 animate-spin mx-auto mb-4" />
-                      <h3 className="text-lg font-bold text-white mb-2">AI Engine Processing...</h3>
-                      <div className="space-y-2 text-xs text-slate-500 mt-4">
-                        <p>⚡ Running liveness detection</p>
-                        <p>🔬 Extracting OCR fields from admit card</p>
-                        <p>🧠 Computing confidence scores</p>
-                        <p>✅ Cross-matching identity data</p>
-                      </div>
-                    </div>
-
-                  ) : result?.verified && result?.decision === 'AUTO_APPROVE' ? (
-                    <div className="space-y-4">
-                      {/* Success banner */}
-                      <div className="flex items-center gap-4 p-5 bg-emerald-500/10 border border-emerald-500/25 rounded-2xl">
-                        <CheckCircle size={40} className="text-emerald-500 flex-shrink-0" />
-                        <div className="flex-1">
-                          <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1">AUTO APPROVED</p>
-                          <h3 className="text-xl font-bold text-white">{result.student_name}</h3>
-                          <p className="text-xs text-slate-400 mt-0.5">{result.branch} · Sem {result.semester}</p>
-                          {result.father_name && <p className="text-[10px] text-slate-600 mt-0.5">F/O {result.father_name}</p>}
-                        </div>
-                        <div className="text-right">
-                          <p className="text-3xl font-black text-emerald-400">{result.final_confidence}%</p>
-                          <p className="text-[10px] text-slate-500">Overall Confidence</p>
-                        </div>
-                      </div>
-
-                      {/* Confidence breakdown */}
-                      {result.component_scores && (
-                        <div className="glass-card p-4 space-y-3">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                            <BarChart3 size={11} /> Confidence Breakdown
-                          </p>
-                          <ScoreBar label="Face Biometric" score={result.component_scores.face_score} />
-                          <ScoreBar label="Enrollment Match" score={result.component_scores.enrollment_score} />
-                          <ScoreBar label="Name Match (OCR)" score={result.component_scores.name_score} />
-                          <ScoreBar label="Father Name Match" score={result.component_scores.father_name_score} />
-                          <ScoreBar label="ID Card Cross-Match" score={result.component_scores.id_score} />
-                          <ScoreBar label="Liveness Score" score={result.component_scores.liveness_score} />
-                        </div>
-                      )}
-
-                      {/* Seat info */}
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="glass p-4 rounded-xl text-center">
-                          <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1">Enrollment</p>
-                          <p className="text-sm font-bold text-white font-mono">{result.enrollment_no}</p>
-                        </div>
-                        <div className="glass p-4 rounded-xl border-indigo-500/20 bg-indigo-500/5 text-center">
-                          <p className="text-[10px] text-indigo-400 font-semibold uppercase tracking-wider mb-1">Room</p>
-                          <p className="text-3xl font-black text-white">{result.room}</p>
-                        </div>
-                        <div className="glass p-4 rounded-xl border-violet-500/20 bg-violet-500/5 text-center">
-                          <p className="text-[10px] text-violet-400 font-semibold uppercase tracking-wider mb-1">Seat</p>
-                          <p className="text-3xl font-black text-white">{result.seat}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between text-[10px] text-slate-600 px-1">
-                        <span>⏱ {result.processing_time_ms}ms processing time</span>
-                        <span>✅ Attendance marked automatically</span>
-                      </div>
-
-                      <button id="next-student-btn" onClick={resetKiosk} className="btn-primary w-full justify-center py-4">
-                        Verify Next Student <RefreshCcw size={14} className="ml-2" />
-                      </button>
-                    </div>
-
-                  ) : result?.decision === 'MANUAL_REVIEW' ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4 p-5 bg-amber-500/10 border border-amber-500/25 rounded-2xl">
-                        <AlertTriangle size={40} className="text-amber-400 flex-shrink-0" />
-                        <div className="flex-1">
-                          <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-1">Manual Review Required</p>
-                          <h3 className="text-xl font-bold text-white">{result.student_name || 'Unknown'}</h3>
-                          <p className="text-xs text-slate-400 mt-1">{result.reason}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-3xl font-black text-amber-400">{result.final_confidence}%</p>
-                          <p className="text-[10px] text-slate-500">Confidence</p>
-                        </div>
-                      </div>
-                      {result.component_scores && (
-                        <div className="glass-card p-4 space-y-3">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Score Breakdown</p>
-                          <ScoreBar label="Face Biometric"   score={result.component_scores.face_score} />
-                          <ScoreBar label="Enrollment Match" score={result.component_scores.enrollment_score} />
-                          <ScoreBar label="Name Match"       score={result.component_scores.name_score} />
-                          <ScoreBar label="Liveness"         score={result.component_scores.liveness_score} />
-                        </div>
-                      )}
-                      <p className="text-xs text-center text-slate-500">Case queued in the Manual Review panel. Invigilator must approve or reject.</p>
-                      <button onClick={resetKiosk} className="btn-primary w-full justify-center">Next Student</button>
-                    </div>
-
-                  ) : (
-                    <div className="text-center space-y-5">
-                      <XCircle size={60} className="text-rose-500 mx-auto" />
-                      <div>
-                        <h3 className="text-xl font-bold text-white mb-2">Verification Failed</h3>
-                        <p className="text-sm text-slate-400">{error || result?.reason || 'Identity could not be confirmed.'}</p>
-                      </div>
-                      {result?.component_scores && (
-                        <div className="glass-card p-4 text-left space-y-3">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Failure Analysis</p>
-                          <ScoreBar label="Face Biometric"   score={result.component_scores.face_score} />
-                          <ScoreBar label="Enrollment Match" score={result.component_scores.enrollment_score} />
-                          <ScoreBar label="Liveness"         score={result.component_scores.liveness_score} />
-                        </div>
-                      )}
-                      <button onClick={resetKiosk} className="btn-primary w-full justify-center">Try Again</button>
-                    </div>
+                  {stepError && (
+                    <button
+                      onClick={() => { setStepError(''); }}
+                      className="px-4 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm text-slate-300 border border-slate-600"
+                    >
+                      Retry
+                    </button>
                   )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* ── Step 2: Admit card ────────────────────────────── */}
+            {step === 2 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <CheckCircle size={16} className="text-emerald-400" />
+                  <span className="text-emerald-400 text-sm font-semibold">
+                    Face matched: {result?.student_name} ({result?.confidence?.toFixed(1)}%)
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText size={18} className="text-violet-400" />
+                  <h2 className="font-bold">Step 2 of 3 — Admit Card OCR</h2>
+                </div>
+                <p className="text-slate-400 text-sm mb-5">
+                  Hold the <strong className="text-white">admit card</strong> flat and fully visible
+                  in the camera, then click <strong className="text-white">Scan Admit Card</strong>.
+                </p>
+
+                {stepError && (
+                  <div className="bg-rose-900/30 border border-rose-500/50 rounded-xl p-3 mb-4 flex items-start gap-2">
+                    <AlertTriangle size={16} className="text-rose-400 mt-0.5 shrink-0" />
+                    <p className="text-rose-300 text-sm">{stepError}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleScanAdmit}
+                    disabled={loading}
+                    className="flex-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2"
+                  >
+                    {loading
+                      ? <><Loader2 size={18} className="animate-spin" /> Scanning…</>
+                      : <><Scan size={18} /> Scan Admit Card</>}
+                  </button>
+                  {stepError && (
+                    <button
+                      onClick={() => setStepError('')}
+                      className="px-4 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm text-slate-300 border border-slate-600"
+                    >
+                      Retry
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── Step 3: ID card ───────────────────────────────── */}
+            {step === 3 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <CheckCircle size={16} className="text-emerald-400" />
+                  <span className="text-emerald-400 text-sm font-semibold">
+                    Admit card verified — {result?.ocr_enrollment || result?.enrollment_no}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 mb-4">
+                  <CreditCard size={18} className="text-violet-400" />
+                  <h2 className="font-bold">Step 3 of 3 — ID Card OCR</h2>
+                </div>
+                <p className="text-slate-400 text-sm mb-5">
+                  Hold the <strong className="text-white">college ID card</strong> facing the camera,
+                  then click <strong className="text-white">Scan ID Card</strong>.
+                </p>
+
+                {stepError && (
+                  <div className="bg-rose-900/30 border border-rose-500/50 rounded-xl p-3 mb-4 flex items-start gap-2">
+                    <AlertTriangle size={16} className="text-rose-400 mt-0.5 shrink-0" />
+                    <p className="text-rose-300 text-sm">{stepError}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleScanID}
+                    disabled={loading}
+                    className="flex-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2"
+                  >
+                    {loading
+                      ? <><Loader2 size={18} className="animate-spin" /> Scanning…</>
+                      : <><Scan size={18} /> Scan ID Card</>}
+                  </button>
+                  {stepError && (
+                    <button
+                      onClick={() => setStepError('')}
+                      className="px-4 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm text-slate-300 border border-slate-600"
+                    >
+                      Retry
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── Step 4: Success ───────────────────────────────── */}
+            {step === 4 && (
+              <div className="text-center py-6">
+                <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4"
+                  style={{ boxShadow: '0 0 30px rgba(16,185,129,0.3)' }}>
+                  <CheckCircle size={36} className="text-emerald-400" />
+                </div>
+                <h2 className="text-2xl font-bold text-emerald-400 mb-1">Verified ✓</h2>
+                <p className="text-white text-lg font-semibold mb-1">{result?.student_name}</p>
+                <p className="text-slate-400 text-sm mb-1">#{result?.enrollment_no}</p>
+                <p className="text-slate-500 text-xs mb-5">
+                  Attendance #{result?.attendance_id} recorded at {result?.verified_at?.slice(11, 19)}
+                </p>
+
+                {/* Score cards */}
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                  <div className="bg-slate-800 rounded-xl p-3">
+                    <div className="text-emerald-400 font-bold text-lg">
+                      {result?.confidence?.toFixed(0)}%
+                    </div>
+                    <div className="text-slate-400 text-xs">Face Match</div>
+                  </div>
+                  <div className="bg-slate-800 rounded-xl p-3">
+                    <div className="text-emerald-400 font-bold text-lg">
+                      {result?.ocr_match !== false ? '✓' : '~'}
+                    </div>
+                    <div className="text-slate-400 text-xs">Admit Card</div>
+                  </div>
+                  <div className="bg-slate-800 rounded-xl p-3">
+                    <div className="text-emerald-400 font-bold text-lg">
+                      {result?.id_match !== false ? '✓' : '~'}
+                    </div>
+                    <div className="text-slate-400 text-xs">ID Card</div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={resetKiosk}
+                  className="px-8 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl font-semibold flex items-center gap-2 mx-auto transition-all"
+                >
+                  <RefreshCcw size={16} /> Next Student
+                </button>
+              </div>
+            )}
           </div>
+
+          {/* Bottom action bar — visible during active verification */}
+          {step > 0 && step < 4 && (
+            <div className="flex gap-2">
+              <button
+                onClick={resetKiosk}
+                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl text-sm text-slate-400 flex items-center justify-center gap-2 transition-colors"
+              >
+                <RefreshCcw size={14} /> Reset
+              </button>
+              {step === 1 && (
+                <button
+                  onClick={() => { setShowManual(true); setManualError(''); }}
+                  className="flex-1 py-2.5 bg-amber-900/40 hover:bg-amber-900/60 border border-amber-500/40 rounded-xl text-sm text-amber-400 flex items-center justify-center gap-2 transition-colors"
+                >
+                  <PenLine size={14} /> Manual Entry
+                </button>
+              )}
+              <button
+                onClick={() => setShowTerminate(true)}
+                className="flex-1 py-2.5 bg-rose-900/30 hover:bg-rose-900/50 border border-rose-500/30 rounded-xl text-sm text-rose-400 flex items-center justify-center gap-2 transition-colors"
+              >
+                <Ban size={14} /> Terminate
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
-};
-
-export default Kiosk;
+}

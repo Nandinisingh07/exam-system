@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
 from ..database import get_db
-from ..models.logistics import Classroom, Exam, SeatAllocation, DutyAssignment
+from ..models.logistics import Classroom, Exam, SeatAllocation, DutyAssignment, DutyDocument
 from ..utils.auth import get_current_user, require_admin
 from ..models.user import User
 
@@ -20,6 +20,10 @@ class ExamCreate(BaseModel):
     date: str # ISO format
     time: str
     branch: Optional[str] = "All"
+
+class DutyDocumentCreate(BaseModel):
+    filename: str
+    data_url: str
 
 router = APIRouter(prefix="/api/logistics", tags=["logistics"])
 
@@ -112,9 +116,6 @@ def generate_seats(exam_id: int, db: Session = Depends(get_db), _: User = Depend
         db.add(allocation)
         current_seat_count += 1
         
-        db.add(allocation)
-        current_seat_count += 1
-        
     db.commit()
     return {"message": "Allocations generated successfullly"}
 
@@ -128,14 +129,16 @@ def get_all_duties(db: Session = Depends(get_db), _: User = Depends(require_admi
     return [
         {
             "id": d.id,
+            "teacher": d.teacher.name,
             "name": d.teacher.name,
             "email": d.teacher.email,
             "room": d.classroom.room_number,
-            "exam": d.exam.subject_name,
+            "exam": f"{d.exam.subject_code} {d.exam.subject_name}",
             "code": d.exam.subject_code,
-            "date": d.exam.date.strftime("%b %d"),
-            "time": "09:00 – 12:00",
-            "status": "Confirmed"
+            "date": d.exam.date.strftime("%Y-%m-%d"),
+            "time": d.exam.date.strftime("%H:%M") if hasattr(d.exam.date, "strftime") else "09:00",
+            "status": "Confirmed",
+            "type": "manual"
         }
         for d in duties
     ]
@@ -183,10 +186,10 @@ def get_my_duty(db: Session = Depends(get_db), user: User = Depends(get_current_
         
         students_list.append({
             "seat": a.seat_number,
-            "name": a.student.name,
-            "enrollment": a.student.enrollment_no,
+            "name": a.student.name if a.student else "Unknown Student",
+            "enrollment": a.student.enrollment_no if a.student else "N/A",
             "status": status,
-            "time": str(att.marked_at.strftime("%H:%M %p")) if att else "—"
+            "time": str(att.marked_at.strftime("%H:%M %p")) if (att and att.marked_at) else "—"
         })
     
     return {
@@ -202,3 +205,55 @@ def get_my_duty(db: Session = Depends(get_db), user: User = Depends(get_current_
         "washroom": len([s for s in students_list if s["status"] == "Washroom"]),
         "students": students_list
     }
+
+@router.get("/duty-documents")
+def get_duty_documents(db: Session = Depends(get_db)):
+    docs = db.query(DutyDocument).all()
+    return [
+        {
+            "id": doc.id,
+            "file": doc.filename,
+            "filename": doc.filename,
+            "dataUrl": doc.filepath,
+            "uploadedAt": doc.uploaded_at.isoformat() if doc.uploaded_at else "",
+            "status": doc.status or "Published"
+        }
+        for doc in docs
+    ]
+
+@router.post("/duty-documents")
+def upload_duty_document(doc_in: DutyDocumentCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    doc = DutyDocument(
+        filename=doc_in.filename,
+        filepath=doc_in.data_url,
+        status="Published"
+    )
+    db.add(doc)
+    db.commit()
+    db.refresh(doc)
+    return {
+        "id": doc.id,
+        "file": doc.filename,
+        "filename": doc.filename,
+        "dataUrl": doc.filepath,
+        "uploadedAt": doc.uploaded_at.isoformat() if doc.uploaded_at else "",
+        "status": doc.status
+    }
+
+@router.delete("/duty-documents/{doc_id}")
+def delete_duty_document(doc_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    doc = db.query(DutyDocument).filter(DutyDocument.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Duty document not found")
+    db.delete(doc)
+    db.commit()
+    return {"message": "Duty document deleted successfully"}
+
+@router.delete("/duties/{duty_id}")
+def delete_duty(duty_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    duty = db.query(DutyAssignment).filter(DutyAssignment.id == duty_id).first()
+    if not duty:
+        raise HTTPException(status_code=404, detail="Duty assignment not found")
+    db.delete(duty)
+    db.commit()
+    return {"message": "Duty assignment deleted successfully"}

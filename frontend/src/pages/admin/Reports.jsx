@@ -1,39 +1,75 @@
 import React, { useState, useEffect } from 'react';
-import { ClipboardCheck, Search, Download, Filter, Users, CheckCircle, AlertTriangle, User, Calendar } from 'lucide-react';
-
-const MOCK_INVIGILATORS = [
-  { name: 'Shweta Agrawal', email: 'shweta@exam.com', room: '101', exam: 'CS-402', date: '2026-05-22', verified: 36, absent: 2, washroom: 1, total: 39 },
-  { name: 'Anita Sharma', email: 'anita@exam.com', room: '201', exam: 'ME-301', date: '2026-05-22', verified: 28, absent: 3, washroom: 0, total: 31 },
-  { name: 'Rajesh Kumar', email: 'rajesh@exam.com', room: '302', exam: 'EC-201', date: '2026-05-22', verified: 22, absent: 4, washroom: 2, total: 28 },
-  { name: 'Priya Singh', email: 'priya@exam.com', room: '102', exam: 'CS-403', date: '2026-05-23', verified: 40, absent: 0, washroom: 0, total: 40 },
-];
-
-const MOCK_RECORDS = [
-  { invigilator: 'Shweta Agrawal', seat: 'A-01', name: 'Arjun Sharma', enrollment: 'CS20230042', room: '101', exam: 'CS-402', time: '09:04', status: 'Verified', method: 'Face+ID+QR' },
-  { invigilator: 'Shweta Agrawal', seat: 'A-02', name: 'Priya Patel', enrollment: 'CS20230058', room: '101', exam: 'CS-402', time: '09:07', status: 'Verified', method: 'Face+ID+QR' },
-  { invigilator: 'Shweta Agrawal', seat: 'A-03', name: 'Divya Kumar', enrollment: 'CS20230019', room: '101', exam: 'CS-402', time: '—', status: 'Absent', method: '—' },
-  { invigilator: 'Anita Sharma', seat: 'B-01', name: 'Kiran Rao', enrollment: 'IT20230032', room: '201', exam: 'ME-301', time: '09:11', status: 'Verified', method: 'Face+ID+QR' },
-  { invigilator: 'Anita Sharma', seat: 'B-02', name: 'Rahul Verma', enrollment: 'ME20230112', room: '201', exam: 'ME-301', time: '09:03', status: 'Washroom', method: 'Face+ID+QR' },
-  { invigilator: 'Rajesh Kumar', seat: 'C-01', name: 'Sneha Iyer', enrollment: 'CS20230089', room: '302', exam: 'EC-201', time: '09:09', status: 'Verified', method: 'Face+ID+QR' },
-];
+import { ClipboardCheck, Search, Download, Filter, Users, CheckCircle, AlertTriangle, User, Calendar, RefreshCw, ChevronDown } from 'lucide-react';
+import { attendanceApi } from '../../services/api';
 
 const Reports = () => {
   const [selInvig, setSelInvig] = useState('All');
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('records');
+  const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [showFmt, setShowFmt] = useState(false);
+  const dropRef = React.useRef(null);
 
-  const invigilators = ['All', ...MOCK_INVIGILATORS.map(i => i.name)];
+  const fetchRecords = async () => {
+    setLoading(true);
+    try {
+      const res = await attendanceApi.getAll();
+      setRecords(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Error fetching attendance records:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const filteredRecords = MOCK_RECORDS.filter(r =>
+  useEffect(() => {
+    fetchRecords();
+  }, []);
+
+  const invigilators = ['All', ...Array.from(new Set(records.map(r => r.invigilator)))];
+
+  const filteredRecords = records.filter(r =>
     (selInvig === 'All' || r.invigilator === selInvig) &&
-    (r.name.toLowerCase().includes(search.toLowerCase()) || r.enrollment.toLowerCase().includes(search.toLowerCase()))
+    ((r.name || '').toLowerCase().includes(search.toLowerCase()) || (r.enrollment || '').toLowerCase().includes(search.toLowerCase()))
   );
 
-  const filteredInvig = MOCK_INVIGILATORS.filter(i =>
+  // Group records by invigilator to generate summary statistics
+  const summaryGroup = {};
+  records.forEach(r => {
+    const key = r.invigilator;
+    if (!summaryGroup[key]) {
+      summaryGroup[key] = {
+        name: r.invigilator,
+        email: `${r.invigilator.toLowerCase().replace(/\s+/g, '')}@exam.com`,
+        room: r.room,
+        exam: r.exam,
+        date: 'Today',
+        verified: 0,
+        absent: 0,
+        washroom: 0,
+        total: 0
+      };
+    }
+
+    summaryGroup[key].total += 1;
+    if (r.status === 'Verified' || r.status === 'Present') {
+      summaryGroup[key].verified += 1;
+    } else if (r.status === 'Absent') {
+      summaryGroup[key].absent += 1;
+    } else if (r.status === 'Washroom') {
+      summaryGroup[key].washroom += 1;
+    }
+  });
+
+  const invigSummaryList = Object.values(summaryGroup);
+
+  const filteredInvig = invigSummaryList.filter(i =>
     selInvig === 'All' || i.name === selInvig
   );
 
-  const totalVerified = filteredRecords.filter(r => r.status === 'Verified').length;
+  const totalVerified = filteredRecords.filter(r => r.status === 'Verified' || r.status === 'Present').length;
   const totalAbsent = filteredRecords.filter(r => r.status === 'Absent').length;
   const totalWashroom = filteredRecords.filter(r => r.status === 'Washroom').length;
 
@@ -48,7 +84,23 @@ const Reports = () => {
           <h1 className="page-title">Attendance Records</h1>
           <p className="page-subtitle">3-way verified (Face + ID + QR) attendance from all invigilator dashboards</p>
         </div>
-        <button className="btn-secondary text-sm py-2.5 px-4"><Download size={14} /> Export All</button>
+        <div className="flex items-center gap-2">
+          <button onClick={fetchRecords} className="btn-icon">
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+          </button>
+          <div className="relative" ref={dropRef}>
+            <button onClick={() => setShowFmt(v => !v)} disabled={exporting || records.length === 0} className="btn-secondary text-sm py-2.5 px-4 flex items-center gap-2">
+              <Download size={14} />{exporting ? "Exporting…" : "Export All"}<ChevronDown size={12} className={`transition-transform ${showFmt ? "rotate-180" : ""}`} />
+            </button>
+            {showFmt && (
+              <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-white/10 bg-slate-900 shadow-xl overflow-hidden">
+                {[{label:"Export CSV",fmt:"csv",ext:"csv",mime:"text/csv"},{label:"Export Excel",fmt:"excel",ext:"xlsx",mime:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},{label:"Export PDF",fmt:"pdf",ext:"pdf",mime:"application/pdf"}].map(opt => (
+                  <button key={opt.fmt} onClick={async () => { setShowFmt(false); setExporting(true); try { const res = await attendanceApi.exportAllWithAuth(opt.fmt); const url = window.URL.createObjectURL(new Blob([res.data],{type:opt.mime})); const a = document.createElement("a"); a.href=url; a.setAttribute("download",`all_attendance.${opt.ext}`); document.body.appendChild(a); a.click(); a.remove(); window.URL.revokeObjectURL(url); } catch(e){alert("Export failed. Install reportlab & openpyxl on backend.");} finally{setExporting(false);} }} className="w-full text-left px-4 py-2.5 text-xs text-slate-300 hover:bg-indigo-500/15 hover:text-white transition-colors">{opt.label}</button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Summary cards */}
@@ -101,18 +153,21 @@ const Reports = () => {
           <table className="seas-table">
             <thead><tr><th>Seat</th><th>Student</th><th>Enrollment</th><th>Invigilator</th><th>Exam / Room</th><th>Time</th><th>Verification</th><th>Status</th></tr></thead>
             <tbody>
-              {filteredRecords.map((r, i) => (
-                <tr key={i}>
-                  <td><span className="text-xs font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2 py-1 rounded-lg">{r.seat}</span></td>
-                  <td><p className="text-sm font-semibold text-white">{r.name}</p></td>
-                  <td><code className="text-xs text-slate-400 font-mono">{r.enrollment}</code></td>
-                  <td><p className="text-xs text-slate-300">{r.invigilator}</p></td>
-                  <td><p className="text-xs font-mono text-indigo-400">{r.exam}</p><p className="text-[10px] text-slate-500">Room {r.room}</p></td>
-                  <td><span className="text-xs font-mono text-slate-400">{r.time}</span></td>
-                  <td><span className="text-[10px] text-emerald-400 font-semibold">{r.method}</span></td>
-                  <td><span className={r.status === 'Verified' ? 'badge-success' : r.status === 'Absent' ? 'badge-danger' : 'badge-warning'}>{r.status}</span></td>
-                </tr>
-              ))}
+              {filteredRecords.map((r, i) => {
+                const displayStatus = r.status === 'Present' ? 'Verified' : r.status;
+                return (
+                  <tr key={i}>
+                    <td><span className="text-xs font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2 py-1 rounded-lg">{r.seat}</span></td>
+                    <td><p className="text-sm font-semibold text-white">{r.name}</p></td>
+                    <td><code className="text-xs text-slate-400 font-mono">{r.enrollment}</code></td>
+                    <td><p className="text-xs text-slate-300">{r.invigilator}</p></td>
+                    <td><p className="text-xs font-mono text-indigo-400">{r.exam}</p><p className="text-[10px] text-slate-500">Room {r.room}</p></td>
+                    <td><span className="text-xs font-mono text-slate-400">{r.time}</span></td>
+                    <td><span className="text-[10px] text-emerald-400 font-semibold">{r.method}</span></td>
+                    <td><span className={displayStatus === 'Verified' ? 'badge-success' : displayStatus === 'Absent' ? 'badge-danger' : 'badge-warning'}>{displayStatus}</span></td>
+                  </tr>
+                );
+              })}
               {filteredRecords.length === 0 && <tr><td colSpan={8} className="py-10 text-center text-slate-500 text-xs">No records found.</td></tr>}
             </tbody>
           </table>
@@ -122,11 +177,11 @@ const Reports = () => {
       {activeTab === 'summary' && (
         <div className="space-y-3">
           {filteredInvig.map((inv, i) => {
-            const pct = Math.round((inv.verified / inv.total) * 100);
+            const pct = inv.total > 0 ? Math.round((inv.verified / inv.total) * 100) : 0;
             return (
               <div key={i} className="section-card p-5">
                 <div className="flex items-center gap-4 flex-wrap">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-violet-500/10 flex items-center justify-center text-sm font-bold text-indigo-400 flex-shrink-0">{inv.name[0]}</div>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-violet-500/10 flex items-center justify-center text-sm font-bold text-indigo-400 flex-shrink-0">{inv.name ? inv.name[0] : 'I'}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-white">{inv.name}</p>
                     <p className="text-xs text-slate-500">{inv.exam} · Room {inv.room} · {inv.date}</p>
@@ -145,11 +200,14 @@ const Reports = () => {
                       <div className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
-                  <button className="btn-secondary text-xs py-2 px-3"><Download size={12} /> Export</button>
+                  <button onClick={async () => { try { const res = await attendanceApi.exportInvigilatorWithAuth(inv.id, "pdf"); const url = window.URL.createObjectURL(new Blob([res.data], {type:"application/pdf"})); const a = document.createElement("a"); a.href=url; a.setAttribute("download", `attendance_${inv.name}.pdf`); document.body.appendChild(a); a.click(); a.remove(); window.URL.revokeObjectURL(url); } catch(e){ alert("Export failed: " + e.message); }}} className="btn-secondary text-xs py-2 px-3 flex items-center gap-1"><Download size={12} /> Export PDF</button>
                 </div>
               </div>
             );
           })}
+          {filteredInvig.length === 0 && (
+            <div className="text-center py-20 text-slate-500 text-xs">No invigilator duty records found.</div>
+          )}
         </div>
       )}
     </div>

@@ -2,20 +2,31 @@ from fastapi import FastAPI, Response, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from .database import engine, Base, get_db
-from .routers import auth, students, verification, attendance, logistics, monitoring, admin, student_portal
 from .config import settings
 from .utils import metrics
 import os, time
 
+# CRITICAL: Import ALL models before create_all so SQLAlchemy knows about every table
+from .models import (  # noqa: F401 — side-effect imports register models with Base
+    User, UserRole,
+    Student,
+    Classroom, Exam, SeatAllocation, DutyAssignment, DutyDocument,
+    WashroomLog, BiometricLog, VerificationLog,
+    AttendanceRecord, ManualReviewQueue, FraudAlert,
+)
+
+# Create / migrate all tables on startup (safe — only adds missing tables/columns)
+Base.metadata.create_all(bind=engine)
+print("[DB] All tables verified/created.")
+
+from .routers import auth, students, verification, attendance, logistics, monitoring, admin, student_portal
+
 APP_START_TIME = time.time()
 
-# Create / migrate tables (safe — only adds new columns via SQLAlchemy)
-Base.metadata.create_all(bind=engine)
-
 app = FastAPI(
-    title="SEAS — Smart Examination Automated System",
+    title="SEAS – Smart Examination Automated System",
     version="2.0.0",
-    description="AI-powered Exam Verification with Face Recognition, OCR, and Confidence Engine"
+    description="AI-powered Exam Verification with Face Recognition, OCR, and Confidence Engine",
 )
 
 origins = [o.strip() for o in settings.CORS_ORIGINS.split(",")]
@@ -38,31 +49,31 @@ app.include_router(attendance.router)
 app.include_router(admin.router)
 app.include_router(student_portal.router)
 
-
 @app.on_event("startup")
-async def preload_ai_models():
-    """Warm up DeepFace model on startup so first verification is fast."""
+async def _load_face_cache():
+    import asyncio
+    from app.database import SessionLocal
+    from app.services.face_service import load_embedding_cache
+    await asyncio.sleep(0.5)
+    db = SessionLocal()
     try:
-        import numpy as np
-        import cv2
-        import tempfile
-        from deepface import DeepFace
-
-        dummy = np.zeros((224, 224, 3), dtype=np.uint8)
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
-            cv2.imwrite(tmp.name, dummy)
-            try:
-                DeepFace.represent(tmp.name, model_name="Facenet512", enforce_detection=False)
-            except Exception:
-                pass
-            finally:
-                if os.path.exists(tmp.name):
-                    os.remove(tmp.name)
-        print("[SEAS] Facenet512 model preloaded and ready.")
+        result = load_embedding_cache(db)
+        print(f"[Startup] Face cache loaded: {len(result)} students ready")
     except Exception as e:
-        print(f"[SEAS] Model preload warning (non-fatal): {e}")
+        print(f"[Startup] Cache load failed: {e}")
+    finally:
+        db.close()
 
-
+    # Warm up InsightFace so first student isn't slow
+    try:
+        import numpy as np, cv2
+        from app.services.face_service import _get_arcface
+        dummy = np.zeros((320, 320, 3), dtype=np.uint8)
+        app_if = _get_arcface()
+        app_if.get(cv2.cvtColor(dummy, cv2.COLOR_BGR2RGB))
+        print("[Startup] InsightFace warmed up — first verification will be fast")
+    except Exception as e:
+        print(f"[Startup] Warmup non-fatal: {e}")
 @app.get("/")
 def root():
     return {"message": "SEAS Exam Verification API v2.0 running", "status": "ok"}
@@ -79,17 +90,17 @@ def health(db: Session = Depends(get_db)):
         print(f"Health check DB error: {e}")
 
     try:
-        from deepface import DeepFace
+        from deepface import DeepFace  # noqa
         face_ok = True
     except ImportError:
         face_ok = False
 
     tesseract_ok = os.path.isfile(settings.TESSERACT_CMD)
 
-    status = "healthy" if db_ok and face_ok and tesseract_ok else "degraded"
+    health_status = "healthy" if db_ok and face_ok and tesseract_ok else "degraded"
 
     return {
-        "status": status,
+        "status": health_status,
         "db_connected": db_ok,
         "face_service_up": face_ok,
         "ocr_service_up": tesseract_ok,

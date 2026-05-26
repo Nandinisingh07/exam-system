@@ -42,20 +42,15 @@ const InvigilatorDashboard = () => {
   const fetchDuty = async () => {
     try {
       setLoading(true);
-      const res = await logisticsApi.getMyDuty();
+      const [res, bulkRes] = await Promise.all([
+        logisticsApi.getMyDuty().catch(() => ({ data: null })),
+        logisticsApi.getDutyDocuments().catch(() => ({ data: [] }))
+      ]);
       setDuty(res.data);
+      setBulkDuties(Array.isArray(bulkRes.data) ? bulkRes.data : []);
     } catch (err) {
       console.error(err);
     } finally {
-      // Load bulk uploaded duties (visible to all invigilators)
-      try {
-        const bulk = JSON.parse(localStorage.getItem('bulkDuties') || '[]');
-        const validBulk = bulk.filter(b => b.dataUrl);
-        if (validBulk.length !== bulk.length) {
-          localStorage.setItem('bulkDuties', JSON.stringify(validBulk));
-        }
-        setBulkDuties(validBulk);
-      } catch (e) {}
       setLoading(false);
     }
   };
@@ -113,7 +108,7 @@ const InvigilatorDashboard = () => {
     );
   }
 
-  const pct = Math.round((duty.verified / duty.totalStudents) * 100);
+  const pct = duty.totalStudents > 0 ? Math.round((duty.verified / duty.totalStudents) * 100) : 0;
 
   return (
     <div className="space-y-6 animate-fade-slide max-w-5xl mx-auto">
@@ -273,22 +268,22 @@ const InvigilatorDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {duty.students.map(s => {
+              {duty.students.map((s, idx) => {
                 const cfg = STATUS_CONFIG[s.status] || STATUS_CONFIG.Pending;
                 const StatusIcon = cfg.icon;
                 return (
-                  <tr key={s.seat} className={`${cfg.rowBg} group`}>
+                  <tr key={s.seat || s.enrollment || idx} className={`${cfg.rowBg} group`}>
                     <td>
                       <span className="text-xs font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1.5 rounded-lg">
-                        {s.seat}
+                        {s.seat || '—'}
                       </span>
                     </td>
                     <td>
                       <div className="flex items-center gap-2.5">
                         <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500/20 to-violet-500/10 flex items-center justify-center text-[11px] font-bold text-indigo-400 flex-shrink-0">
-                          {s.name[0]}
+                          {(s.name || 'Unknown')[0]}
                         </div>
-                        <p className="text-sm font-semibold text-white">{s.name}</p>
+                        <p className="text-sm font-semibold text-white">{s.name || 'Unknown'}</p>
                       </div>
                     </td>
                     <td>

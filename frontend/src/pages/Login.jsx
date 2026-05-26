@@ -7,8 +7,8 @@ import {
 import { authApi } from '../services/api';
 
 const ROLES = [
-  { role:'admin',       label:'Administrator', desc:'Full system control & analytics',       icon:UserCog,       gradient:'135deg, #7c3aed, #6366f1', border:'rgba(124,58,237,0.35)', email:'admin@exam.com',   pw:'admin123',   tag:'Full Access' },
-  { role:'invigilator', label:'Invigilator',   desc:'Exam hall verification & monitoring',   icon:Shield,        gradient:'135deg, #059669, #10b981', border:'rgba(16,185,129,0.35)', email:'teacher1@exam.com', pw:'pass123', tag:'Hall Access' },
+  { role: 'admin', label: 'Administrator', desc: 'Full system control & analytics', icon: UserCog, gradient: '135deg, #7c3aed, #6366f1', border: 'rgba(124,58,237,0.35)', email: 'admin@exam.com', pw: 'admin123', tag: 'Full Access' },
+  { role: 'invigilator', label: 'Invigilator', desc: 'Exam hall verification & monitoring', icon: Shield, gradient: '135deg, #059669, #10b981', border: 'rgba(16,185,129,0.35)', email: 'teacher@exam.com', pw: 'teacher123', tag: 'Hall Access' },
 ];
 
 export default function Login() {
@@ -29,40 +29,28 @@ export default function Login() {
     e.preventDefault(); setLoading(true); setError('');
     try {
       const res = await authApi.login({ email, password });
-      localStorage.setItem('token', res.data.access_token);
-      localStorage.setItem('user', JSON.stringify(res.data));
-      navigate('/');
-    } catch {
-      // Demo logic
-      const r = ROLES[sel];
-      
-      // Check for dynamically created invigilators
-      const customInvigilators = JSON.parse(localStorage.getItem('invigilators') || '[]');
-      
-      // Look for a matching custom invigilator OR the default admin
-      const matchedInvig = customInvigilators.find(inv => inv.email === email && inv.password === password);
-      
-      if (email === 'admin@exam.com' && password === 'admin123') {
-        localStorage.setItem('token', 'demo-' + Date.now());
-        localStorage.setItem('user', JSON.stringify({ name: 'Dr. Admin Kumar', email, role: 'admin' }));
-        navigate('/');
-      } else if (matchedInvig) {
-        localStorage.setItem('token', 'demo-' + Date.now());
-        localStorage.setItem('user', JSON.stringify({ name: matchedInvig.name, email: matchedInvig.email, role: 'invigilator' }));
-        navigate('/');
-      } else {
-        // Fallback for custom but maybe incorrect? Check if trying to login as default invigilator
-        if (sel === 1 && email === 'teacher1@exam.com' && password === 'pass123') {
-          localStorage.setItem('token', 'demo-' + Date.now());
-          localStorage.setItem('user', JSON.stringify({ name: 'Shweta Agrawal', email, role: 'invigilator' }));
-          navigate('/');
-        } else {
-          setError('Invalid credentials. Please check your email and password.');
-        }
-      }
-    } finally { setLoading(false); }
-  };
+      const data = res.data;
+      // Store ALL keys individually so ProtectedRoute can find them
+      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('role', data.role);
+      localStorage.setItem('name', data.name);
+      localStorage.setItem('email', data.email);
+      localStorage.setItem('user', JSON.stringify(data));
 
+      // Redirect based on role
+      if (data.role === 'admin') {
+        navigate('/admin');
+      } else if (data.role === 'invigilator') {
+        navigate('/invigilator');
+      } else {
+        navigate('/');
+      }
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Invalid credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
   const card = ROLES[sel];
   const Icon = card.icon;
 

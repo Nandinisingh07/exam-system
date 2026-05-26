@@ -11,10 +11,10 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.student import Student
 from ..models.user import User
-from ..utils.auth import require_admin
+from ..utils.auth import require_admin, get_current_user
 from ..services.face_service import encode_face_from_bytes, serialize_encoding
 from ..config import settings
-
+from ..utils.auth import require_admin, get_current_user, get_current_user
 router = APIRouter(prefix="/api/students", tags=["students"])
 
 
@@ -27,6 +27,7 @@ async def register_student(
     # Identity
     name:           str           = Form(...),
     enrollment_no:  str           = Form(...),
+    student_id_no:  Optional[str] = Form(None),
     email:          Optional[str] = Form(None),
     phone:          Optional[str] = Form(None),
     father_name:    Optional[str] = Form(None),
@@ -79,6 +80,7 @@ async def register_student(
         name            = name.strip(),
         father_name     = father_name.strip() if father_name else None,
         enrollment_no   = enrollment_no,
+        student_id_no   = student_id_no.strip() if student_id_no else None,
         email           = email.strip() if email else None,
         phone           = phone,
         class_name      = class_name,
@@ -113,7 +115,7 @@ async def register_student(
 # ---------------------------------------------------------------------------
 
 @router.get("")
-def list_students(db: Session = Depends(get_db), user: User = Depends(require_admin)):
+def list_students(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     students = db.query(Student).order_by(Student.registered_at.desc()).all()
     return [_student_dict(s) for s in students]
 
@@ -174,6 +176,7 @@ def _student_dict(s: Student) -> dict:
         "name":           s.name,
         "father_name":    s.father_name,
         "enrollment_no":  s.enrollment_no,
+        "student_id_no":  s.student_id_no,
         "email":          s.email,
         "phone":          s.phone,
         "class_name":     s.class_name,

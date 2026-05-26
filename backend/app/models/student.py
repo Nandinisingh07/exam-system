@@ -11,6 +11,7 @@ class Student(Base):
     name            = Column(String, nullable=False)
     father_name     = Column(String, nullable=True)
     enrollment_no   = Column(String, unique=True, index=True, nullable=False)
+    student_id_no   = Column(String, unique=True, index=True, nullable=True)   # College Student ID (e.g. 4851087)
     email           = Column(String, unique=True, index=True, nullable=True)
     phone           = Column(String, nullable=True)
 

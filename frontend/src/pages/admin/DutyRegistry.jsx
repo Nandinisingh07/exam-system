@@ -4,7 +4,7 @@ import {
   CheckCircle, AlertCircle, Search, Download,
   Edit2, Trash2, Eye, X, Plus, User, ChevronRight, RefreshCw
 } from 'lucide-react';
-import { logisticsApi } from '../../services/api';
+import { logisticsApi, authApi } from '../../services/api';
 
 const STATUS_STYLE = {
   Confirmed: 'badge-success',
@@ -22,13 +22,24 @@ const AssignDutyModal = ({ onClose, onAdd }) => {
   const [options, setOptions] = useState({ teachers: [], rooms: [], exams: [] });
 
   useEffect(() => {
-    // In a real app, we'd fetch these from the backend
-    // For now, we'll use IDs from our seed data
-    setOptions({
-       teachers: [{id: 2, name: 'Prof. A. Kumar (Teacher)'}],
-       rooms: [{id: 1, name: 'Room 101'}, {id: 2, name: 'Room 102'}],
-       exams: [{id: 1, name: 'Computer Networks (CS-402)'}]
-    });
+    const loadOptions = async () => {
+      try {
+        const [usersRes, roomsRes, examsRes] = await Promise.all([
+          authApi.listUsers(),
+          logisticsApi.getClassrooms(),
+          logisticsApi.getExams()
+        ]);
+        const teachers = (usersRes.data || [])
+          .filter(u => u.role === 'invigilator')
+          .map(u => ({ id: u.id, name: `${u.name} (${u.email})` }));
+        const rooms = (roomsRes.data || []).map(r => ({ id: r.id, name: `Room ${r.room_number}` }));
+        const exams = (examsRes.data || []).map(e => ({ id: e.id, name: `${e.subject_name} (${e.subject_code})` }));
+        setOptions({ teachers, rooms, exams });
+      } catch (err) {
+        console.error("Failed to load options", err);
+      }
+    };
+    loadOptions();
   }, []);
 
   const handleSubmit = async (e) => {

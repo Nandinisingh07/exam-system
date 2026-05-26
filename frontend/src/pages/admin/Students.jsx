@@ -93,8 +93,8 @@ const WebcamCapture = ({ onCapture, onCancel }) => {
 // ─── Registration Modal ──────────────────────────────────────────────────────
 const AddStudentModal = ({ onClose, onAdd }) => {
   const [form, setForm] = useState({
-    name: '', enrollment_no: '', email: '', phone: '',
-    class_name: 'BE-CS-A', year: 1, semester: 1, college_name: '',
+    name: '', enrollment_no: '', student_id_no: '', email: '', phone: '',
+    class_name: 'BE-CS-A', year: 3, semester: 5, college_name: 'RGPV',
     face_image: null,
   });
   const [preview, setPreview] = useState(null);
@@ -185,6 +185,11 @@ const AddStudentModal = ({ onClose, onAdd }) => {
                   value={form.enrollment_no} onChange={e => set('enrollment_no', e.target.value)} />
               </div>
               <div>
+                <label className="seas-label">Student ID No. (from ID Card) *</label>
+                <input className="seas-input font-mono" placeholder="e.g. 4851087" required
+                  value={form.student_id_no} onChange={e => set('student_id_no', e.target.value)} />
+              </div>
+              <div>
                 <label className="seas-label">Email Address</label>
                 <input className="seas-input" type="email" placeholder="student@college.edu"
                   value={form.email} onChange={e => set('email', e.target.value)} />
@@ -195,9 +200,11 @@ const AddStudentModal = ({ onClose, onAdd }) => {
                   value={form.phone} onChange={e => set('phone', e.target.value)} />
               </div>
               <div>
-                <label className="seas-label">College / University Name</label>
-                <input className="seas-input" placeholder="e.g. Rajiv Gandhi Technical University"
-                  value={form.college_name} onChange={e => set('college_name', e.target.value)} />
+                <label className="seas-label">College / University *</label>
+                <select className="seas-input" value={form.college_name} onChange={e => set('college_name', e.target.value)} required>
+                  <option value="RGPV">RGPV</option>
+                  <option value="IIST">IIST</option>
+                </select>
               </div>
               <div>
                 <label className="seas-label">Branch / Section *</label>
@@ -364,13 +371,16 @@ const AdminStudents = () => {
                         </div>
                         <div>
                           <p className="text-sm font-bold text-white">{s.name}</p>
+                          {s.college_name && <p className="text-[10px] text-slate-400 font-medium">Institution: {s.college_name}</p>}
                           <p className="text-[10px] text-slate-500">{s.email || '—'}</p>
-
                         </div>
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <code className="text-[11px] font-mono text-slate-400">{s.enrollment_no}</code>
+                      <div className="space-y-0.5">
+                        <code className="text-[11px] font-mono text-slate-400">{s.enrollment_no}</code>
+                        {s.student_id_no && <p className="text-[10px] text-slate-500 font-mono">ID: {s.student_id_no}</p>}
+                      </div>
                     </td>
                     <td className="px-5 py-4">
                       <p className="text-xs font-bold text-slate-300">{s.class_name}</p>

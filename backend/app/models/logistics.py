@@ -50,3 +50,11 @@ class DutyAssignment(Base):
     teacher = relationship("User")
     exam = relationship("Exam", back_populates="duties")
     classroom = relationship("Classroom", back_populates="duties")
+
+class DutyDocument(Base):
+    __tablename__ = "duty_documents"
+    id = Column(Integer, primary_key=True, index=True)
+    filename = Column(String, nullable=False)
+    filepath = Column(String, nullable=False)
+    uploaded_at = Column(DateTime, server_default=func.now())
+    status = Column(String, default="Published")

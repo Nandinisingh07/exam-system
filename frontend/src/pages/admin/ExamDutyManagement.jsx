@@ -5,18 +5,7 @@ import {
   UserPlus, X, CheckCircle, AlertCircle, BookOpen, Zap,
   File, Edit2, Eye, ToggleLeft, ToggleRight
 } from 'lucide-react';
-import { logisticsApi } from '../../services/api';
-
-const DUTY_TEACHERS = [
-  'Shweta Agrawal', 'Anita Sharma', 'Rajesh Kumar', 'Priya Singh', 'Mohan Verma',
-  'Sunita Patel', 'Arun Gupta', 'Kavita Joshi', 'Deepak Rao', 'Neha Mishra',
-];
-
-const MOCK_DUTIES = [
-  { id: 1, teacher: 'Shweta Agrawal', exam: 'CS-402 Computer Networks', room: '101', date: '2026-05-22', time: '09:00', status: 'Confirmed', type: 'manual' },
-  { id: 2, teacher: 'Anita Sharma', exam: 'ME-301 Thermodynamics', room: '201', date: '2026-05-23', time: '09:00', status: 'Confirmed', type: 'upload' },
-  { id: 3, teacher: 'Rajesh Kumar', exam: 'EC-201 Electronics', room: '302', date: '2026-05-24', time: '02:00', status: 'Pending', type: 'manual' },
-];
+import { logisticsApi, authApi } from '../../services/api';
 
 const UploadPanel = ({ onUpload }) => {
   const [dragging, setDragging] = useState(false);
@@ -42,19 +31,15 @@ const UploadPanel = ({ onUpload }) => {
     setUploading(true);
     
     const saveDuty = async (dataUrl) => {
-      await new Promise(r => setTimeout(r, 1000));
-      const duties = JSON.parse(localStorage.getItem('bulkDuties') || '[]');
-      duties.push({ file: file.name, dataUrl, uploadedAt: new Date().toISOString(), id: Date.now(), status: 'Published' });
       try {
-        localStorage.setItem('bulkDuties', JSON.stringify(duties));
+        await logisticsApi.addDutyDocument({ filename: file.name, data_url: dataUrl });
+        setUploading(false); setDone(true);
+        if (onUpload) onUpload();
       } catch (err) {
-        console.warn("File too large, saving name only");
-        duties.pop();
-        duties.push({ file: file.name, uploadedAt: new Date().toISOString(), id: Date.now(), status: 'Published' });
-        localStorage.setItem('bulkDuties', JSON.stringify(duties));
+        console.error(err);
+        alert("Failed to upload duty sheet to backend.");
+        setUploading(false);
       }
-      setUploading(false); setDone(true);
-      if (onUpload) onUpload(file.name);
     };
 
     if (file.type.startsWith('image/')) {
@@ -138,68 +123,84 @@ const UploadPanel = ({ onUpload }) => {
   );
 };
 
-const ManualPanel = ({ onAssign }) => {
-  const [teacher, setTeacher] = useState('');
-  const [exam, setExam] = useState('');
-  const [room, setRoom] = useState('');
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('09:00');
+const ManualPanel = ({ onAssign, teachersList = [], examsList = [], roomsList = [] }) => {
+  const [teacherId, setTeacherId] = useState('');
+  const [examId, setExamId] = useState('');
+  const [roomId, setRoomId] = useState('');
   const [done, setDone] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const duties = JSON.parse(localStorage.getItem('manualDuties') || '[]');
-    duties.push({ teacher, exam, room, date, time, id: Date.now(), status: 'Confirmed', type: 'manual' });
-    localStorage.setItem('manualDuties', JSON.stringify(duties));
-    setDone(true);
-    if (onAssign) onAssign({ teacher, exam, room, date, time });
-    setTimeout(() => { setDone(false); setTeacher(''); setExam(''); setRoom(''); setDate(''); setTime('09:00'); }, 3000);
+    if (!teacherId || !roomId || !examId) return;
+    try {
+      await logisticsApi.assignDuty(teacherId, roomId, examId);
+      setDone(true);
+      if (onAssign) onAssign();
+      setTimeout(() => { setDone(false); setTeacherId(''); setExamId(''); setRoomId(''); }, 3000);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.detail || "Failed to assign duty.");
+    }
   };
+
+  const selectedExam = examsList.find(e => String(e.id) === String(examId));
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="block text-xs font-medium text-slate-400 mb-1.5">Invigilator Name *</label>
-        <input 
-          list="teacher-options" 
-          className="seas-input" 
-          value={teacher} 
-          onChange={e => setTeacher(e.target.value)} 
-          placeholder="Select or type teacher name..." 
-          required 
-        />
-        <datalist id="teacher-options">
-          {DUTY_TEACHERS.map(t => <option key={t} value={t} />)}
-        </datalist>
+        <select
+          className="seas-input"
+          value={teacherId}
+          onChange={e => setTeacherId(e.target.value)}
+          required
+        >
+          <option value="">Select invigilator...</option>
+          {teachersList.map(t => <option key={t.id} value={t.id}>{t.name} ({t.email})</option>)}
+        </select>
       </div>
       <div>
         <label className="block text-xs font-medium text-slate-400 mb-1.5">Exam / Subject *</label>
-        <input type="text" className="seas-input" placeholder="e.g. CS-402 Computer Networks" value={exam} onChange={e => setExam(e.target.value)} required />
+        <select
+          className="seas-input"
+          value={examId}
+          onChange={e => setExamId(e.target.value)}
+          required
+        >
+          <option value="">Select exam...</option>
+          {examsList.map(e => <option key={e.id} value={e.id}>{e.subject_code} - {e.subject_name}</option>)}
+        </select>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div>
+        <div className="col-span-2">
           <label className="block text-xs font-medium text-slate-400 mb-1.5">Room *</label>
-          <input type="text" className="seas-input" placeholder="e.g. 101" value={room} onChange={e => setRoom(e.target.value)} required />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1.5">Time *</label>
-          <input type="time" className="seas-input" value={time} onChange={e => setTime(e.target.value)} required />
+          <select
+            className="seas-input"
+            value={roomId}
+            onChange={e => setRoomId(e.target.value)}
+            required
+          >
+            <option value="">Select room...</option>
+            {roomsList.map(r => <option key={r.id} value={r.id}>Room {r.room_number}</option>)}
+          </select>
         </div>
       </div>
-      <div>
-        <label className="block text-xs font-medium text-slate-400 mb-1.5">Date *</label>
-        <input type="date" className="seas-input" value={date} onChange={e => setDate(e.target.value)} required />
-      </div>
+
+      {selectedExam && (
+        <div className="p-2.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300">
+          Scheduled on: <strong className="text-white">{selectedExam.date}</strong>
+        </div>
+      )}
 
       {done && (
         <div style={{ padding: '10px 14px', borderRadius: '10px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <CheckCircle size={14} style={{ color: '#34d399' }} />
-          <p style={{ color: '#34d399', fontSize: '12px', fontWeight: 600 }}>Duty assigned! Visible on {teacher}'s dashboard only.</p>
+          <p style={{ color: '#34d399', fontSize: '12px', fontWeight: 600 }}>Duty assigned successfully!</p>
         </div>
       )}
 
       <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-        <UserPlus size={14} /> Assign Duty to {teacher || 'Invigilator'}
+        <UserPlus size={14} /> Assign Duty
       </button>
     </form>
   );
@@ -208,37 +209,104 @@ const ManualPanel = ({ onAssign }) => {
 const ExamDutyManagement = () => {
   const [tab, setTab] = useState('duties');
   const [method, setMethod] = useState('upload');
-  const [duties, setDuties] = useState(MOCK_DUTIES);
+  const [duties, setDuties] = useState([]);
   const [exams, setExams] = useState([]);
+  const [classrooms, setClassrooms] = useState([]);
+  const [invigilators, setInvigilators] = useState([]);
+  const [uploadedDocs, setUploadedDocs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [showAddExam, setShowAddExam] = useState(false);
   const [newExam, setNewExam] = useState({ subject_name: '', subject_code: '', date: '', time: '09:00', branch: 'All' });
 
+  const refreshAll = async () => {
+    setLoading(true);
+    try {
+      const [dRes, eRes, cRes, iRes, docRes] = await Promise.all([
+        logisticsApi.getDuties(),
+        logisticsApi.getExams(),
+        logisticsApi.getClassrooms(),
+        authApi.listUsers(),
+        logisticsApi.getDutyDocuments()
+      ]);
+      
+      setDuties(Array.isArray(dRes.data) ? dRes.data : []);
+      setExams(Array.isArray(eRes.data) ? eRes.data : []);
+      setClassrooms(Array.isArray(cRes.data) ? cRes.data : []);
+      setInvigilators(Array.isArray(iRes.data) ? iRes.data.filter(u => u.role === 'invigilator') : []);
+      setUploadedDocs(Array.isArray(docRes.data) ? docRes.data : []);
+    } catch (err) {
+      console.error("Error loading duty management data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    logisticsApi.getExams().then(r => setExams(Array.isArray(r.data) ? r.data : [])).catch(() => {});
-    const m = JSON.parse(localStorage.getItem('manualDuties') || '[]');
-    setDuties([...MOCK_DUTIES, ...m]);
+    refreshAll();
   }, []);
 
   const handleAddExam = async (e) => {
     e.preventDefault(); setLoading(true);
-    try { await logisticsApi.addExam(newExam); const r = await logisticsApi.getExams(); setExams(Array.isArray(r.data) ? r.data : []); setShowAddExam(false); setNewExam({ subject_name: '', subject_code: '', date: '', time: '09:00', branch: 'All' }); }
+    try {
+      await logisticsApi.addExam(newExam);
+      await refreshAll();
+      setShowAddExam(false);
+      setNewExam({ subject_name: '', subject_code: '', date: '', time: '09:00', branch: 'All' });
+    }
     catch (err) { console.error(err); } finally { setLoading(false); }
   };
 
-  const handleUpload = (fname) => {
-    setDuties(p => [...p, { id: Date.now(), teacher: 'All Invigilators', exam: fname, room: 'All Rooms', date: new Date().toISOString().slice(0,10), time: '—', status: 'Published', type: 'upload' }]);
+  const handleUploadDone = () => {
+    refreshAll();
   };
 
-  const handleAssign = (d) => {
-    setDuties(p => [...p, { id: Date.now(), ...d, status: 'Confirmed', type: 'manual' }]);
+  const handleAssignDone = () => {
+    refreshAll();
   };
 
-  const filtered = duties.filter(d =>
-    d.teacher.toLowerCase().includes(search.toLowerCase()) ||
-    d.exam.toLowerCase().includes(search.toLowerCase()) ||
-    d.room.includes(search)
+  const handleDeleteDuty = async (d) => {
+    if (!window.confirm(`Are you sure you want to delete this ${d.type === 'upload' ? 'duty sheet document' : 'duty assignment'}?`)) return;
+    try {
+      if (d.type === 'upload') {
+        await logisticsApi.deleteDutyDocument(d.id);
+      } else {
+        await logisticsApi.deleteDuty(d.id);
+      }
+      refreshAll();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete.");
+    }
+  };
+
+  const combinedDuties = [
+    ...duties.map(d => ({
+      id: d.id,
+      teacher: d.teacher,
+      exam: d.exam,
+      room: d.room,
+      date: d.date,
+      time: d.time,
+      type: 'manual',
+      status: 'Confirmed'
+    })),
+    ...uploadedDocs.map(doc => ({
+      id: doc.id,
+      teacher: 'All Invigilators',
+      exam: doc.filename,
+      room: 'All Rooms',
+      date: doc.uploadedAt ? doc.uploadedAt.slice(0, 10) : '—',
+      time: '—',
+      type: 'upload',
+      status: doc.status || 'Published'
+    }))
+  ];
+
+  const filtered = combinedDuties.filter(d =>
+    (d.teacher || '').toLowerCase().includes(search.toLowerCase()) ||
+    (d.exam || '').toLowerCase().includes(search.toLowerCase()) ||
+    (d.room || '').includes(search)
   );
 
   return (
@@ -293,7 +361,7 @@ const ExamDutyManagement = () => {
                         Uploaded documents (PDF, Image, DOC, Excel) will be <strong style={{ color: '#a5b4fc' }}>visible to ALL registered invigilators</strong> on their dashboards.
                       </p>
                     </div>
-                    <UploadPanel onUpload={handleUpload} />
+                    <UploadPanel onUpload={handleUploadDone} />
                   </>
                 ) : (
                   <>
@@ -303,7 +371,7 @@ const ExamDutyManagement = () => {
                         Manual assignments are <strong style={{ color: '#6ee7b7' }}>only visible to the selected invigilator</strong> on their personal dashboard.
                       </p>
                     </div>
-                    <ManualPanel onAssign={handleAssign} />
+                    <ManualPanel onAssign={handleAssignDone} teachersList={invigilators} examsList={exams} roomsList={classrooms} />
                   </>
                 )}
               </div>
@@ -315,7 +383,7 @@ const ExamDutyManagement = () => {
             <div className="section-card-header">
               <div>
                 <h3 className="section-card-title">Duty Registry</h3>
-                <p className="text-xs text-slate-500 mt-0.5">{duties.length} assignments total</p>
+                <p className="text-xs text-slate-500 mt-0.5">{filtered.length} assignments total</p>
               </div>
               <div className="relative">
                 <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -324,27 +392,35 @@ const ExamDutyManagement = () => {
             </div>
             <div className="overflow-x-auto">
               <table className="seas-table">
-                <thead><tr><th>Invigilator</th><th>Exam</th><th>Room / Date</th><th>Type</th><th>Status</th></tr></thead>
+                <thead><tr><th>Invigilator</th><th>Exam</th><th>Room / Date</th><th>Type</th><th>Status</th><th className="text-right">Actions</th></tr></thead>
                 <tbody>
                   {filtered.map(d => (
-                    <tr key={d.id}>
+                    <tr key={d.id + '-' + d.type}>
                       <td>
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-xs font-bold text-indigo-400">{d.teacher[0]}</div>
+                          <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-xs font-bold text-indigo-400">{(d.teacher || 'A')[0]}</div>
                           <p className="text-sm font-semibold text-white">{d.teacher}</p>
                         </div>
                       </td>
                       <td><p className="text-xs text-slate-300">{d.exam}</p><p className="text-[10px] text-slate-500 mt-0.5 font-mono">{d.time}</p></td>
-                      <td><p className="text-xs text-slate-300">Room {d.room}</p><p className="text-[10px] text-slate-500">{d.date}</p></td>
+                      <td><p className="text-xs text-slate-300">{d.room.startsWith('Room') ? d.room : `Room ${d.room}`}</p><p className="text-[10px] text-slate-500">{d.date}</p></td>
                       <td>
                         <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', fontWeight: 600, background: d.type === 'upload' ? 'rgba(99,102,241,0.12)' : 'rgba(16,185,129,0.12)', color: d.type === 'upload' ? '#818cf8' : '#34d399', border: `1px solid ${d.type === 'upload' ? 'rgba(99,102,241,0.25)' : 'rgba(16,185,129,0.25)'}` }}>
                           {d.type === 'upload' ? '📄 Upload' : '✏️ Manual'}
                         </span>
                       </td>
                       <td><span className={d.status === 'Confirmed' || d.status === 'Published' ? 'badge-success' : 'badge-warning'}>{d.status}</span></td>
+                      <td className="text-right">
+                        <button
+                          onClick={() => handleDeleteDuty(d)}
+                          className="btn-icon w-7 h-7 hover:text-rose-400 hover:border-rose-500/30 hover:bg-rose-500/[0.08]"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
-                  {filtered.length === 0 && <tr><td colSpan={5} className="py-10 text-center text-slate-500 text-xs">No duties found.</td></tr>}
+                  {filtered.length === 0 && <tr><td colSpan={6} className="py-10 text-center text-slate-500 text-xs">No duties found.</td></tr>}
                 </tbody>
               </table>
             </div>

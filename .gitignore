@@ -1,0 +1,15 @@
+﻿backend/db/*.db
+backend/db/*.db-shm
+backend/db/*.db-wal
+backend/app/services/weights/
+fix_*.py
+del_*.py
+bulk_*.py
+check_*.py
+__pycache__/
+*.pyc
+node_modules/
+.env
+.env.*
+.DS_Store
+Thumbs.db

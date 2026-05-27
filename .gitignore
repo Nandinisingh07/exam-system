@@ -1,14 +1,17 @@
-﻿# Database files (contain your personal data)
+﻿# Database files
 backend/db/*.db
 backend/db/*.db-shm
 backend/db/*.db-wal
 
-# Uploaded/captured images
+# Personal uploaded images and face data
 backend/uploads/
 backend/app/uploads/
 frontend/public/uploads/
 
-# ML model weights (large binary files)
+# Python virtual environment (never commit this)
+backend/venv/
+
+# ML model weights
 backend/app/services/weights/
 
 # Fix scripts

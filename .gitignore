@@ -36,3 +36,8 @@ node_modules/
 # OS files
 .DS_Store
 Thumbs.db
+
+# All SQLite databases
+*.db
+*.db-shm
+*.db-wal

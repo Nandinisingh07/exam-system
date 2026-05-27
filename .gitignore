@@ -1,42 +1,35 @@
-﻿backend/db/*.db
+﻿# Database files (contain your personal data)
+backend/db/*.db
 backend/db/*.db-shm
 backend/db/*.db-wal
 
+# Uploaded/captured images
+backend/uploads/
+backend/app/uploads/
+frontend/public/uploads/
+
+# ML model weights (large binary files)
 backend/app/services/weights/
 
+# Fix scripts
 fix_*.py
 del_*.py
 bulk_*.py
 check_*.py
 
+# Python cache
 __pycache__/
 *.pyc
-*.log
+*.pyo
 
+# Node modules
 node_modules/
-frontend/node_modules/
-backend/node_modules/
 
-dist/
-build/
-
-.venv/
-venv/
-
+# Env files
 .env
 .env.*
+!.env.example
 
+# OS files
 .DS_Store
 Thumbs.db
-
-# test outputs
-test-results/
-.pytest_cache/
-
-# images / large assets
-*.png
-*.jpg
-*.jpeg
-
-# optional
-tests/assets/

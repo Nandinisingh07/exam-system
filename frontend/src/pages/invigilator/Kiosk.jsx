@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  Camera, ShieldCheck, User, CreditCard, FileText,
+  Camera, RotateCcw, ShieldCheck, User, CreditCard, FileText,
   CheckCircle, XCircle, RefreshCcw, Loader2, Scan,
   AlertTriangle, ChevronRight, Clock, Zap, Activity,
   ThumbsUp, Play, UserPlus, X, Ban, PenLine
@@ -164,18 +164,25 @@ function StepBadge({ step, current, done, error }) {
 
 // ─── Webcam panel ────────────────────────────────────────────────────────────
 
-function WebcamPanel({ videoRef, streamActive, label }) {
+function WebcamPanel({ videoRef, streamActive, label, onFlip, hasMultipleCameras, facingMode, isMobile }) {
   return (
     <div className="relative rounded-2xl overflow-hidden bg-slate-900 border border-slate-700"
-      style={{ height: '420px' }}>
+      style={{ height: isMobile ? 'min(52vw,360px)' : '420px' }}>
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
         className="w-full h-full object-cover"
-        style={{ transform: 'scaleX(-1)' }}
+        style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
       />
+      {hasMultipleCameras && (
+        <button onClick={onFlip} title="Flip camera"
+          className="absolute top-3 right-3 z-10 bg-black/50 hover:bg-black/75 text-white rounded-full p-2 transition-all"
+        >
+          <RotateCcw size={20} />
+        </button>
+      )}
       {/* Animated scan ring */}
       {streamActive && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -447,6 +454,9 @@ function RegisterModal({ students, videoRef, onClose, onSuccess }) {
 export default function Kiosk() {
   const videoRef = useRef(null);
   const [streamActive, setStreamActive] = useState(false);
+  const [facingMode, setFacingMode] = useState('user');
+  const [hasMultipleCameras, setHasMultipleCameras] = useState(false);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && (window.innerWidth < 768 || 'ontouchstart' in window));
   const [exams, setExams] = useState([]);
   const [students, setStudents] = useState([]);
   const [examId, setExamId] = useState('');
@@ -469,31 +479,49 @@ export default function Kiosk() {
     return () => clearInterval(t);
   }, []);
 
-  // Webcam
+  // Camera detection
+  useEffect(() => {
+    navigator.mediaDevices.enumerateDevices().then(d => {
+      setHasMultipleCameras(d.filter(x => x.kind === 'videoinput').length > 1);
+    }).catch(() => {});
+    const onResize = () => setIsMobile(window.innerWidth < 768 || 'ontouchstart' in window);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // Webcam restarts on flip
   useEffect(() => {
     let stream;
+    let el = videoRef.current;
+    if (el && el.srcObject) { el.srcObject.getTracks().forEach(t => t.stop()); el.srcObject = null; setStreamActive(false); }
     (async () => {
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode },
           audio: false,
         });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.onloadedmetadata = () => setStreamActive(true);
-        }
+        el = videoRef.current;
+        if (el) { el.srcObject = stream; el.onloadedmetadata = () => setStreamActive(true); }
       } catch (e) {
-        console.error('Camera error:', e);
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+          el = videoRef.current;
+          if (el) { el.srcObject = stream; el.onloadedmetadata = () => setStreamActive(true); }
+        } catch (e2) { console.error('Camera error:', e2); }
       }
     })();
-    return () => stream?.getTracks().forEach(t => t.stop());
-  }, []);
+    return () => { if (stream) stream.getTracks().forEach(t => t.stop()); };
+  }, [facingMode]);
 
   // Load exams + students
   useEffect(() => {
     apiGet('/api/logistics/exams').then(setExams).catch(console.error);
     apiGet('/api/students').then(setStudents).catch(() => setStudents([]));
   }, []);
+
+  function flipCamera() {
+    setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
+  }
 
   function resetKiosk() {
     setStep(0);
@@ -767,6 +795,10 @@ export default function Kiosk() {
           <WebcamPanel
             videoRef={videoRef}
             streamActive={streamActive}
+            facingMode={facingMode}
+            hasMultipleCameras={hasMultipleCameras}
+            isMobile={isMobile}
+            onFlip={flipCamera}
             label={
               step === 0 ? 'Waiting for exam selection'
                 : step === 1 ? 'Position face in oval — then click Scan Face'

@@ -575,7 +575,7 @@ async def readiness_check(
     db:    Session = Depends(get_db),
     admin: User    = Depends(get_current_user),
 ):
-    from ..services.face_service import _embedding_cache
+    from ..services.face_service import _embedding_cache, update_embedding_cache
     total          = db.query(Student).count()
     with_encoding  = db.query(Student).filter(Student.face_encoding.isnot(None)).all()
     missing        = db.query(Student).filter(Student.face_encoding.is_(None)).all()

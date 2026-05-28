@@ -1,4 +1,4 @@
-﻿"""
+"""
 Face Service — ArcFace embeddings, MiniFASNet liveness, in-memory cache.
 Optimised for 80 students in real-time exam environment.
 """
@@ -65,7 +65,7 @@ def _download(url: str, path: str):
             tot = total / 1_048_576
             print(f"\r[FaceService] {mb:.1f}MB / {tot:.1f}MB ({pct}%)", end="", flush=True)
     urllib.request.urlretrieve(url, path, _progress)
-    print(f"\n[FaceService] Saved → {path}")
+    print(f"\n[FaceService] Saved ? {path}")
 
 def _get_arcface():
     global _arcface_session
@@ -266,7 +266,7 @@ def _dist_to_confidence(dist: float) -> float:
 # In-memory embedding cache — for fast real-time verification
 # ---------------------------------------------------------------------------
 
-_embedding_cache: dict[int, np.ndarray] = {}   # student_id → 512-d embedding
+_embedding_cache: dict[int, np.ndarray] = {}   # student_id ? 512-d embedding
 
 
 def load_embedding_cache(db):
@@ -293,7 +293,8 @@ def load_embedding_cache(db):
             print(f"[FaceCache] Skipping student {s.id} ({s.name}): {e}")
             failed += 1
 
-    _embedding_cache = cache
+    _embedding_cache.clear()
+    _embedding_cache.update(cache)
     print(f"[FaceCache] Loaded {len(cache)} face embeddings into memory "
           f"({failed} failed).")
     return cache
@@ -374,5 +375,6 @@ def deserialize_encoding(data: bytes) -> np.ndarray | None:
     except Exception as e:
         print(f"[FaceService] deserialize_encoding failed: {e}")
         return None
+
 
 

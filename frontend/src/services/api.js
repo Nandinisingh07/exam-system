@@ -4,7 +4,7 @@ const API_BASE_URL = 'https://decaf-brim-steadfast.ngrok-free.dev';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
 });
 
 api.interceptors.request.use((config) => {
@@ -117,6 +117,7 @@ export const verificationApi = {
 };
 
 export default api;
+
 
 
 

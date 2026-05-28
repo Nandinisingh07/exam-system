@@ -6,7 +6,7 @@ import {
   ThumbsUp, Play, UserPlus, X, Ban, PenLine
 } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE = 'https://decaf-brim-steadfast.ngrok-free.dev';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -19,6 +19,7 @@ async function apiPost(path, body) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
       Authorization: `Bearer ${getToken()}`,
     },
     body: JSON.stringify(body),
@@ -38,7 +39,7 @@ async function apiPost(path, body) {
 
 async function apiGet(path) {
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { Authorization: `Bearer ${getToken()}` },
+    headers: { 'ngrok-skip-browser-warning': 'true', Authorization: `Bearer ${getToken()}` },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();

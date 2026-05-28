@@ -37,156 +37,76 @@ def _deskew(image: np.ndarray) -> np.ndarray:
                           borderMode=cv2.BORDER_REPLICATE)
 
 
-def preprocess_for_ocr(image_bytes: bytes) -> bytes:
-    """
-    Multi-stage preprocessing:
-      1. Deskew
-      2. Upscale small images
-      3. CLAHE contrast enhancement
-      4. Gaussian denoising
-      5. Adaptive threshold
-    """
+def preprocess_for_ocr(image_bytes: bytes) -> list:
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     if img is None:
-        
-        return image_bytes
-
-    # 1. Deskew
+        return [(image_bytes, "original")]
     img = _deskew(img)
-
-    # 2. Upscale if too small for OCR
     h, w = img.shape[:2]
-    # Always upscale — Tesseract needs ~300dpi, webcam frames need 3x minimum
-    scale = 3000 / w
-    img = cv2.resize(img, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
-    print(f"[OCR DEBUG] Upscaled from {w}x{h} to {img.shape[1]}x{img.shape[0]}")
-    # 3. Grayscale + CLAHE contrast enhancement
+    scale = min(2.0, 1500 / w) if w < 1500 else 1.0
+    if scale != 1.0:
+        img = cv2.resize(img, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+    print("[OCR] Size: {}x{}".format(img.shape[1], img.shape[0]))
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    results = []
+    denoised = cv2.fastNlMeansDenoising(gray, h=10)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    gray = clahe.apply(gray)
-
-    # 4. Sharpen before threshold
-    sharpen_kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
-    gray = cv2.filter2D(gray, -1, sharpen_kernel)
-
-    # 5. Otsu threshold — more reliable than adaptive for printed cards
-    _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-
-    # DEBUG — saves what Tesseract actually sees
-    cv2.imwrite("C:/Users/Nandini singh/Desktop/ocr_debug.png", thresh)
-    print(f"[OCR DEBUG] shape={thresh.shape} min={thresh.min()} max={thresh.max()}")
-
-    print('[OCR DEBUG] shape=' + str(thresh.shape) + ' min=' + str(thresh.min()) + ' max=' + str(thresh.max()))
-    _, buf = cv2.imencode('.png', thresh)
-    return buf.tobytes()
-
-# ---------------------------------------------------------------------------
-# Raw OCR
-# ---------------------------------------------------------------------------
-
-def extract_raw_text(image_bytes: bytes) -> str:
-    """Return raw OCR text from image bytes (with preprocessing)."""
+    enhanced = clahe.apply(denoised)
+    _, t1 = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    _, b1 = cv2.imencode(".png", t1)
+    results.append((b1.tobytes(), "clahe_otsu"))
+    blurred = cv2.GaussianBlur(gray, (3, 3), 0)
+    t2 = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, 10)
+    _, b2 = cv2.imencode(".png", t2)
+    results.append((b2.tobytes(), "adaptive"))
+    kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+    sharpened = cv2.filter2D(gray, -1, kernel)
+    _, t3 = cv2.threshold(sharpened, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    _, b3 = cv2.imencode(".png", t3)
+    results.append((b3.tobytes(), "sharpen_otsu"))
+    _, b4 = cv2.imencode(".png", gray)
+    results.append((b4.tobytes(), "gray_raw"))
     try:
-        processed = preprocess_for_ocr(image_bytes)
-        image = Image.open(io.BytesIO(processed))
-        # PSM 6 = single block of text; try PSM 3 as fallback
-        # Whitelist reduces garbage characters significantly
-        WHITELIST = (
-            '-c tessedit_char_whitelist='
-            'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
-            '0123456789/.-: '
-        )
-        configs = [
-            f'--oem 3 --psm 4 {WHITELIST}',
-            f'--oem 3 --psm 6 {WHITELIST}',
-            f'--oem 3 --psm 3 {WHITELIST}',
-        ]
-        results = []
-        for cfg in configs:
-            t = pytesseract.image_to_string(image, config=cfg).strip()
-            results.append(t)
-            print('[OCR PSM] len=' + str(len(t)) + ' preview=' + repr(t[:80]))
-        
-        # Pick result containing digits+letters (most likely to have enrollment)
-        def has_enrollment_pattern(t):
-            import re
-            return bool(re.search(r'[0-9]{4}', t))
-        
-        ranked = [t for t in results if has_enrollment_pattern(t)]
-        text = ranked[0] if ranked else max(results, key=len)
-        return text
+        cv2.imwrite(r"C:/Users/Nandini singh/Desktop/ocr_debug.png", t1)
+    except Exception:
+        pass
+    return results
+def extract_raw_text(image_bytes: bytes) -> str:
+    WL = "-c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/.-: "
+    configs = ["--oem 3 --psm 6 " + WL, "--oem 3 --psm 4 " + WL, "--oem 3 --psm 11 " + WL]
+    ENROLL_RE = re.compile(r"[0-9]{4}[A-Za-z]{2}[0-9]{6}")
+    def score_text(t):
+        s = 0
+        if re.search(r"[0-9]{4}", t): s += 3
+        if re.search(r"[A-Z]{2,4}[0-9]{6,12}", t): s += 5
+        if ENROLL_RE.search(t): s += 10
+        s += min(len(t) / 100, 3)
+        return s
+    best_text = ""
+    best_score = -1
+    try:
+        variants = preprocess_for_ocr(image_bytes)
+        for img_bytes, label in variants:
+            image = Image.open(io.BytesIO(img_bytes))
+            for cfg in configs:
+                try:
+                    t = pytesseract.image_to_string(image, config=cfg).strip()
+                    sc = score_text(t)
+                    print("[OCR] {}/{} score={} preview={}".format(label, cfg[10:12], sc, repr(t[:60])))
+                    if sc > best_score:
+                        best_score = sc
+                        best_text = t
+                        if ENROLL_RE.search(t):
+                            print("[OCR] Enrollment found in " + label)
+                            return t
+                except Exception as e:
+                    print("[OCR] {} failed: {}".format(label, e))
     except Exception as e:
-        try:
-            from ..utils import metrics
-            metrics.OCR_ERRORS_TOTAL.inc()
-        except Exception:
-            pass
-        print(f"[OCR] Raw extraction error: {e}")
-        return ""
+        print("[OCR] error: " + str(e))
+    return best_text
 
 
-# ---------------------------------------------------------------------------
-# Field-Level Extraction — Admit Card
-# ---------------------------------------------------------------------------
-
-def _roman_to_int(s: str) -> int:
-    roman = {'I':1,'V':5,'X':10,'L':50,'C':100}
-    result = 0
-    prev = 0
-    for c in reversed(s.upper()):
-        val = roman.get(c, 0)
-        result += val if val >= prev else -val
-        prev = val
-    return result
-
-FIELD_PATTERNS = {
-    "roll_number": [
-        # RGPV format: "Roll No. : 0818CL231046"
-        r"Roll\s*No\.?\s*[:\-]?\s*([A-Z0-9]{8,15})",
-        r"(?:Enrollment|Enrolment|Registration)\s*(?:No\.?|Number)\s*[:\-]?\s*([A-Z0-9]{8,15})",
-        r"(?:Student\s*Id|Id\s*No\.?|Student\s*Id\s*No\.?)\s*[:\-]?\s*([0-9A-Z\-]{4,15})",
-        r"\b([0-9]{4}[A-Z]{2}[0-9]{6})\b",   # RGPV pattern: 0818CL231046
-        r"\b([A-Z]{2,4}[0-9]{6,12})\b",
-        r"\b([0-9]{8,12})\b",
-    ],
-    "student_name": [
-        # RGPV: "Name: Miss. NANDINI SINGH  D/O  Mr. JAY PRAKASH SINGH"
-        r"Name\s*[:\-]\s*(?:Miss\.|Mr\.|Mrs\.|Dr\.)?\s*([A-Z][A-Za-z\s\.]{3,40}?)\s*(?:D/O|S/O|W/O|C/O|$)",
-        r"(?:Student|Candidate|Name of Student)\s*[:\-]?\s*([A-Z][A-Za-z\s\.]{3,50}?)(?:\n|Father|Roll|D/O|S/O)",
-        r"(?:Name)\s*[:\-]\s*([A-Z][A-Za-z\s\.]{3,40})",
-    ],
-    "father_name": [
-        # RGPV: "D/O  Mr. JAY PRAKASH SINGH"
-        r"(?:D/O|S/O|W/O)\s*(?:Mr\.|Mrs\.|Dr\.)?\s*([A-Z][A-Za-z\s\.]{3,50}?)(?:\n|Course|Roll|Centre)",
-        r"(?:Father(?:'s)?|Guardian(?:'s)?)\s*(?:Name)?\s*[:\-]?\s*([A-Z][A-Za-z\s\.]{3,50}?)(?:\n|Course|Roll)",
-    ],
-    "branch": [
-        # RGPV: "Course/Branch  B.Tech, Artificial Intelligence and Machine Learning"
-        r"(?:Course[/\s]*Branch|Branch|Course|Programme)\s*[:\-]?\s*([A-Za-z\s\,\.\-\/]{5,60}?)(?:\n|Sem|Year|Session|Centre)",
-    ],
-    "semester": [
-        r"Semester\s+([IVX]{1,4}|\d{1,2})",
-        r"(?:Sem(?:ester)?|SEM)\s*[:\-]?\s*([IVX]{1,4}|\d{1,2})",
-    ],
-    "centre_code": [
-        # RGPV: "[0818] Indore Institute..."
-        r"\[(\d{4})\]",
-        r"(?:Centre\s*Code|Center\s*Code)\s*[:\-]?\s*([A-Z0-9]{3,10})",
-    ],
-    "centre_name": [
-        r"\[\d{4}\]\s*([A-Za-z\s\.,&]{5,80}?)(?:\n|Practical|Please)",
-        r"(?:Centre\s*Name|Exam\s*Centre)\s*[:\-]?\s*([A-Za-z\s\.,]{5,60}?)(?:\n|Code|Shift)",
-    ],
-    "exam_session": [
-        r"(?:Session|Exam\s*Session|Academic\s*Year)\s*[:\-]?\s*(\d{4}[-\/]\d{2,4})",
-        r"(December\s+\d{4}|November\s+\d{4}|May\s+\d{4}|June\s+\d{4})",
-    ],
-    "exam_shift": [
-        r"Time\s*[:\-]?\s*(\d{1,2}:\d{2}\s*(?:AM|PM)\s*to\s*\d{1,2}:\d{2}\s*(?:AM|PM))",
-        r"(?:Shift|Timing)\s*[:\-]?\s*(Morning|Evening|Afternoon|\d{1,2}:\d{2})",
-    ],
-}
 
 
 def extract_fields(text: str) -> dict:
@@ -350,7 +270,7 @@ def score_enrollment_match(db_enrollment: str, ocr_fields: dict, raw_text: str) 
 
     # Fuzzy match on extracted field
     field_score = _similarity(target, extracted)
-    if field_score > 0.85:
+    if field_score > 0.75:
         return field_score
 
     # Search raw text for any token close to target

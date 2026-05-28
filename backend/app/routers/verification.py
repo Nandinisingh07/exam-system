@@ -155,7 +155,7 @@ def _admit_verdict(
     """
     Returns (passed, reason, overall_confidence).
     Weights: enrollment 70% + semester 30%.
-    Only enrollment is a hard gate (>= 0.6).
+    Only enrollment is a hard gate (>= 0.40).
     """
     overall = round(
         (enroll_conf * 0.70) +
@@ -163,7 +163,7 @@ def _admit_verdict(
         3
     )
 
-    if enroll_conf < 0.6:
+    if enroll_conf < 0.40:
         return False, (
             f"Enrollment not matched (confidence: {enroll_conf:.0%}). "
             "Hold card flat, fill the frame, and retry."

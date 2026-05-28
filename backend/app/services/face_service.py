@@ -1,5 +1,5 @@
 """
-Face Service — ArcFace embeddings, MiniFASNet liveness, in-memory cache.
+Face Service â€” ArcFace embeddings, MiniFASNet liveness, in-memory cache.
 Optimised for 80 students in real-time exam environment.
 """
 
@@ -37,8 +37,8 @@ import mediapipe as mp
 COSINE_THRESHOLD   = 0.55   # lower distance = better match; <0.55 is a match
 BLUR_THRESHOLD     = 80.0   # Laplacian variance; disabled below
 WEIGHTS_DIR        = os.path.join(os.path.dirname(__file__), "weights")
-ARCFACE_URL  = ""   # unused — insightface handles download
-ARCFACE_PATH = ""   # unused — insightface handles download
+ARCFACE_URL  = ""   # unused â€” insightface handles download
+ARCFACE_PATH = ""   # unused â€” insightface handles download
 LIVENESS_URL       = "https://github.com/yakhyo/face-anti-spoofing/releases/download/weights/MiniFASNetV2.onnx"
 LIVENESS_PATH      = os.path.join(WEIGHTS_DIR, "MiniFASNetV2.onnx")
 
@@ -54,7 +54,7 @@ _mp_face_detection = None
 def _download(url: str, path: str):
     if os.path.exists(path):
         return
-    print(f"[FaceService] Downloading {os.path.basename(path)} …")
+    print(f"[FaceService] Downloading {os.path.basename(path)} â€¦")
     downloaded = 0
     def _progress(count, block, total):
         nonlocal downloaded
@@ -146,13 +146,13 @@ def _crop_align(img_bgr: np.ndarray, bbox) -> np.ndarray:
 
 
 # ---------------------------------------------------------------------------
-# Public API — encoding
+# Public API â€” encoding
 # ---------------------------------------------------------------------------
 
 def encode_face_from_bytes(img_bytes: bytes):
     """
     Returns (embedding, error).
-    Passes full image to InsightFace — it handles detection + alignment internally.
+    Passes full image to InsightFace â€” it handles detection + alignment internally.
     """
     img = _decode_image(img_bytes)
     if img is None:
@@ -163,7 +163,7 @@ def encode_face_from_bytes(img_bytes: bytes):
         rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         faces = app.get(rgb)
         if not faces:
-            return None, "No face detected — ensure good lighting and face the camera directly"
+            return None, "No face detected â€” ensure good lighting and face the camera directly"
         # Use highest-confidence face
         best = max(faces, key=lambda f: f.det_score)
         emb = np.array(best.embedding, dtype=np.float64)
@@ -197,11 +197,11 @@ def encode_faces_averaged(img_bytes_list: list[bytes]):
 
 
 # ---------------------------------------------------------------------------
-# Public API — liveness
+# Public API â€” liveness
 # ---------------------------------------------------------------------------
 
 def get_liveness_from_bytes(img_bytes: bytes) -> float:
-    """Liveness disabled — returns neutral passing score."""
+    """Liveness disabled â€” returns neutral passing score."""
     return 0.8
     try:
         img = _decode_image(img_bytes)
@@ -225,7 +225,7 @@ def get_liveness_from_bytes(img_bytes: bytes) -> float:
 
 
 # ---------------------------------------------------------------------------
-# Public API — comparison (legacy, used if cache is not loaded)
+# Public API â€” comparison (legacy, used if cache is not loaded)
 # ---------------------------------------------------------------------------
 
 def compare_faces_batch(stored_encodings: list, live_encoding: np.ndarray):
@@ -263,7 +263,7 @@ def _dist_to_confidence(dist: float) -> float:
 
 
 # ---------------------------------------------------------------------------
-# In-memory embedding cache — for fast real-time verification
+# In-memory embedding cache â€” for fast real-time verification
 # ---------------------------------------------------------------------------
 
 _embedding_cache: dict[int, np.ndarray] = {}   # student_id ? 512-d embedding
@@ -331,7 +331,7 @@ def compare_faces_cached(live_encoding: np.ndarray, student_ids: list[int] | Non
     global _embedding_cache
 
     if not _embedding_cache:
-        print("[FaceCache] WARNING: cache is empty — run load_embedding_cache() at startup")
+        print("[FaceCache] WARNING: cache is empty â€” run load_embedding_cache() at startup")
         return []
 
     b = np.array(live_encoding, dtype=np.float64)
@@ -344,7 +344,7 @@ def compare_faces_cached(live_encoding: np.ndarray, student_ids: list[int] | Non
     if not ids:
         return []
 
-    # Vectorised cosine distance — single matrix multiply, ~0.1ms for 80 students
+    # Vectorised cosine distance â€” single matrix multiply, ~0.1ms for 80 students
     matrix    = np.stack([_embedding_cache[i] for i in ids])   # (N, 512)
     distances = 1.0 - matrix @ b                                # (N,)
 
@@ -358,7 +358,7 @@ def compare_faces_cached(live_encoding: np.ndarray, student_ids: list[int] | Non
 
 
 # ---------------------------------------------------------------------------
-# Serialisation helpers — used by students.py and admin routers
+# Serialisation helpers â€” used by students.py and admin routers
 # ---------------------------------------------------------------------------
 
 def serialize_encoding(embedding: np.ndarray) -> bytes:

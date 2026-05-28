@@ -41,3 +41,9 @@ Thumbs.db
 *.db
 *.db-shm
 *.db-wal
+
+tests/
+
+backend/uploads/
+
+backend/db/

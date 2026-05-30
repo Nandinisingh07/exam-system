@@ -1,8 +1,8 @@
-"""
-Verification Router � 3-step pipeline:
+﻿"""
+Verification Router — 3-step pipeline:
   Step 1: Face biometric (ArcFace + liveness)
-  Step 2: Admit card OCR  � cross-verify enrollment, name, semester, branch
-  Step 3: ID card OCR     � cross-verify name + student ID, then mark attendance
+  Step 2: Admit card OCR  — cross-verify enrollment, name, semester, branch
+  Step 3: ID card OCR     — cross-verify name + student ID, then mark attendance
 """
 
 import base64
@@ -126,9 +126,9 @@ def _score_semester(ocr_sem_raw: str | None, student_sem: str | None) -> float:
         return 0.5
     return 1.0 if e == s else 0.0
 def _score_branch(db_branch: str | None, ocr_fields: dict) -> float:
-    """Fuzzy branch match. Returns 0.0�1.0."""
+    """Fuzzy branch match. Returns 0.0–1.0."""
     if not db_branch:
-        return 0.5  # not stored � neutral
+        return 0.5  # not stored — neutral
     ocr_branch = ocr_fields.get("branch", "")
     if not ocr_branch:
         return 0.0
@@ -163,7 +163,7 @@ def _admit_verdict(
         3
     )
 
-    if enroll_conf < 0.30:
+    if enroll_conf < 0.40:
         return False, (
             f"Enrollment not matched (confidence: {enroll_conf:.0%}). "
             "Hold card flat, fill the frame, and retry."
@@ -173,7 +173,7 @@ def _admit_verdict(
 
 
 # ---------------------------------------------------------------------------
-# Step 1 � Face biometric
+# Step 1 — Face biometric
 # ---------------------------------------------------------------------------
 
 @router.post("/step-face")
@@ -201,13 +201,13 @@ async def verify_step_face(
     batch_results = compare_faces_cached(live_encoding, candidate_ids)
 
     if not batch_results:
-        print("[Verify] Cache empty � falling back to DB comparison")
+        print("[Verify] Cache empty — falling back to DB comparison")
         stored = [s.face_encoding for s in candidates]
         raw    = compare_faces_batch(stored, live_encoding)
         batch_results = [(candidates[i].id, m, c) for i, m, c in raw]
 
     if not batch_results:
-        raise HTTPException(500, "Face comparison failed � no results returned")
+        raise HTTPException(500, "Face comparison failed — no results returned")
 
     top_sid, is_match, best_conf = batch_results[0]
 
@@ -222,7 +222,7 @@ async def verify_step_face(
         raise HTTPException(500, "Matched student not found in database")
 
     elapsed = round((time.time() - t0) * 1000)
-    print(f"[Verify] Step 1 OK � {student.name} ({best_conf:.1f}%) "
+    print(f"[Verify] Step 1 OK — {student.name} ({best_conf:.1f}%) "
           f"liveness={liveness_score:.2f} mode={search_mode} [{elapsed}ms]")
 
     return {
@@ -240,7 +240,7 @@ async def verify_step_face(
 
 
 # ---------------------------------------------------------------------------
-# Step 2 � Admit card OCR
+# Step 2 — Admit card OCR
 # Cross-verify: enrollment number, name, semester, branch
 # ---------------------------------------------------------------------------
 
@@ -258,15 +258,15 @@ async def verify_step_admit(
     if not student:
         raise HTTPException(404, "Student not found")
 
-    # -- OCR ------------------------------------------------------------------
+    # ── OCR ──────────────────────────────────────────────────────────────────
     fields, raw_text = extract_admit_card_fields(admit_bytes)
     elapsed_ocr = round((time.time() - t0) * 1000)
 
-    print(f"[Verify] Step 2 OCR done in {elapsed_ocr}ms � fields: {fields}")
+    print(f"[Verify] Step 2 OCR done in {elapsed_ocr}ms — fields: {fields}")
 
-    # -- Soft pass if OCR got nothing at all ----------------------------------
+    # ── Soft pass if OCR got nothing at all ──────────────────────────────────
     if not raw_text.strip():
-        print(f"[Verify] Step 2 OCR returned blank � soft pass for {student.name}")
+        print(f"[Verify] Step 2 OCR returned blank — soft pass for {student.name}")
         return {
             "student_id":      student.id,
             "student_name":    student.name,
@@ -274,10 +274,10 @@ async def verify_step_admit(
             "ocr_match":       False,
             "ocr_confidence":  0.0,
             "fields_extracted": {},
-            "warning":         "OCR could not read card � verify admit card manually",
+            "warning":         "OCR could not read card — verify admit card manually",
         }
 
-    # -- Score each field -----------------------------------------------------
+    # ── Score each field ─────────────────────────────────────────────────────
     enroll_conf = score_enrollment_match(student.enrollment_no, fields, raw_text)
 
     # Semester: use exam's fixed semester constant (set when exam is created)
@@ -297,17 +297,17 @@ async def verify_step_admit(
     sem_conf = _score_semester(ocr_sem, student_sem)
     print("[Verify] Semester OCR=" + str(ocr_sem) + " DB=" + str(student_sem) + " score=" + str(sem_conf))
 
-    print(f"[Verify] Step 2 scores � "
+    print(f"[Verify] Step 2 scores — "
           f"enrollment={enroll_conf:.2f} sem={sem_conf:.2f} "
           f"(exam_sem={exam_sem} student_sem={student_sem})")
 
-    # -- Verdict --------------------------------------------------------------
+    # ── Verdict ──────────────────────────────────────────────────────────────
     passed, reason, overall_conf = _admit_verdict(enroll_conf, sem_conf)
 
     if not passed:
         raise HTTPException(404, reason)
 
-    print(f"[Verify] Step 2 OK � {student.name} admit card verified "
+    print(f"[Verify] Step 2 OK — {student.name} admit card verified "
           f"(overall={overall_conf:.0%})")
 
     return {
@@ -330,7 +330,7 @@ async def verify_step_admit(
 
 
 # ---------------------------------------------------------------------------
-# Step 3 � ID card OCR + mark attendance
+# Step 3 — ID card OCR + mark attendance
 # Cross-verify: name + student ID (enrollment number)
 # ---------------------------------------------------------------------------
 
@@ -418,7 +418,7 @@ async def verify_step_id(
         yield cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
         yield cv2.rotate(image, cv2.ROTATE_180)
 
-    # -- BARCODE: try every rotation + strip + enhancement --------------------
+    # ── BARCODE: try every rotation + strip + enhancement ────────────────────
     h, w = img.shape[:2]
     strips = {"full": img}
     
@@ -449,7 +449,7 @@ async def verify_step_id(
             if found_id: break
         if found_id: break
 
-    # -- OCR FALLBACK ----------------------------------------------------------
+    # ── OCR FALLBACK ──────────────────────────────────────────────────────────
     if not found_id:
         def ocr_search(image):
             g = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape)==3 else image
@@ -513,7 +513,7 @@ async def verify_step_id(
     db.refresh(record)
 
     invalidate_cache_for(req.student_id, db)
-    print(f"[Verify] Step 3 OK � {student.name} marked PRESENT via {found_how}")
+    print(f"[Verify] Step 3 OK — {student.name} marked PRESENT via {found_how}")
 
     return {
         "status":        "verified",
@@ -588,4 +588,3 @@ async def readiness_check(
         "ready":          len(missing) == 0 and len(_embedding_cache) == len(with_encoding),
         "ocr_available":  OCR_AVAILABLE,
     }
-

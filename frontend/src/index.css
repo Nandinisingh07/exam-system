@@ -27,7 +27,7 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background-color: #080c12;
+  background-color: #0f1623;
   color: rgba(255,255,255,0.87);
   font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -431,3 +431,5 @@ body {
 .stat-accent-emerald::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#059669,#10b981); }
 .stat-accent-amber::before   { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#d97706,#f59e0b); }
 .stat-accent-rose::before    { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#be123c,#f43f5e); }
+
+

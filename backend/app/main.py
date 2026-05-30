@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response, Depends
+﻿from fastapi import FastAPI, Response, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from .database import engine, Base, get_db
@@ -7,7 +7,7 @@ from .utils import metrics
 import os, time
 
 # CRITICAL: Import ALL models before create_all so SQLAlchemy knows about every table
-from .models import (  # noqa: F401 — side-effect imports register models with Base
+from .models import (  # noqa: F401 â€” side-effect imports register models with Base
     User, UserRole,
     Student,
     Classroom, Exam, SeatAllocation, DutyAssignment, DutyDocument,
@@ -15,7 +15,7 @@ from .models import (  # noqa: F401 — side-effect imports register models with
     AttendanceRecord, ManualReviewQueue, FraudAlert,
 )
 
-# Create / migrate all tables on startup (safe — only adds missing tables/columns)
+# Create / migrate all tables on startup (safe â€” only adds missing tables/columns)
 Base.metadata.create_all(bind=engine)
 print("[DB] All tables verified/created.")
 
@@ -24,7 +24,7 @@ from .routers import auth, students, verification, attendance, logistics, monito
 APP_START_TIME = time.time()
 
 app = FastAPI(
-    title="SEAS – Smart Examination Automated System",
+    title="SEAS â€“ Smart Examination Automated System",
     version="2.0.0",
     description="AI-powered Exam Verification with Face Recognition, OCR, and Confidence Engine",
 )
@@ -71,7 +71,7 @@ async def _load_face_cache():
         dummy = np.zeros((320, 320, 3), dtype=np.uint8)
         app_if = _get_arcface()
         app_if.get(cv2.cvtColor(dummy, cv2.COLOR_BGR2RGB))
-        print("[Startup] InsightFace warmed up — first verification will be fast")
+        print("[Startup] InsightFace warmed up â€” first verification will be fast")
     except Exception as e:
         print(f"[Startup] Warmup non-fatal: {e}")
 @app.get("/")
@@ -90,7 +90,7 @@ def health(db: Session = Depends(get_db)):
         print(f"Health check DB error: {e}")
 
     try:
-        from deepface import DeepFace  # noqa
+        # deepface removed
         face_ok = True
     except ImportError:
         face_ok = False
@@ -112,3 +112,4 @@ def health(db: Session = Depends(get_db)):
 def get_metrics():
     from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
+

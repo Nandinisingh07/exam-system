@@ -28,7 +28,7 @@ html { scroll-behavior: smooth; }
 
 body {
   background-color: #0f1623;
-  color: rgba(15,23,42,0.9);
+  color: rgba(255,255,255,0.87);
   font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -51,10 +51,10 @@ body {
   --rose:          #f43f5e;
   --emerald:       #10b981;
   --amber:         #f59e0b;
-  --card-bg:       rgba(255,255,255,0.85);
-  --card-border:   rgba(15,23,42,0.12);
+  --card-bg:       rgba(255,255,255,0.038);
+  --card-border:   rgba(255,255,255,0.08);
   --divider:       rgba(255,255,255,0.06);
-  --text-muted:    rgba(15,23,42,0.5);
+  --text-muted:    rgba(255,255,255,0.42);
   --text-body:     rgba(255,255,255,0.72);
 }
 
@@ -431,6 +431,7 @@ body {
 .stat-accent-emerald::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#059669,#10b981); }
 .stat-accent-amber::before   { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#d97706,#f59e0b); }
 .stat-accent-rose::before    { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#be123c,#f43f5e); }
+
 
 
 

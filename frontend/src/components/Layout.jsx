@@ -65,7 +65,7 @@ export default function Layout({ children }) {
     <div style={{ display:'flex', background:'#0a0a0f', minHeight:'100vh' }}>
       <Sidebar role={user.role} user={user} />
 
-      <div style={{ flex:1, marginLeft:'280px', display:'flex', flexDirection:'column', minHeight:'100vh' }}>
+      <div style={{ flex:1, marginLeft: window.innerWidth >= 768 ? '280px' : '0', display:'flex', flexDirection:'column', minHeight:'100vh' }}>
         {/* Navbar */}
         <header style={{ height:'64px', borderBottom:'1px solid rgba(255,255,255,0.06)',
                           display:'flex', alignItems:'center', justifyContent:'space-between',
@@ -237,10 +237,12 @@ export default function Layout({ children }) {
         </header>
 
         {/* Main content */}
-        <main style={{ flex:1, padding:'32px', animationFillMode:'both' }} className="animate-fade-slide">
+        <main style={{ flex:1, padding: typeof window !== 'undefined' && window.innerWidth < 768 ? '16px' : '32px', paddingTop: typeof window !== 'undefined' && window.innerWidth < 768 ? '64px' : '32px', animationFillMode:'both' }} className="animate-fade-slide">
           {children}
         </main>
       </div>
     </div>
   );
 }
+
+

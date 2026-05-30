@@ -249,6 +249,7 @@ const AdminStudents = () => {
   const [search, setSearch]           = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [showModal, setShowModal]     = useState(false);
+  const [updateTarget, setUpdateTarget] = useState(null);
   const [students, setStudents]       = useState([]);
   const [loading, setLoading]         = useState(true);
 
@@ -285,6 +286,7 @@ const AdminStudents = () => {
   return (
     <div className="space-y-6 animate-fade-slide">
       {showModal && <AddStudentModal onClose={() => setShowModal(false)} onAdd={fetchStudents} />}
+      {updateTarget && <UpdateBiometricModal student={updateTarget} onClose={() => setUpdateTarget(null)} onDone={fetchStudents} />}
 
       <div className="page-header">
         <div>
@@ -424,3 +426,4 @@ const AdminStudents = () => {
 };
 
 export default AdminStudents;
+

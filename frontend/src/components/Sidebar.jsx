@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { Menu, X as XIcon } from 'lucide-react';
 import {
   LayoutDashboard, Users, Calendar, MapPin, Shield, Scan, Clock,
   FileBarChart, Settings, LogOut, ChevronRight, GraduationCap,
@@ -11,9 +12,9 @@ const ROLE_NAV = {
   admin: {
     label: 'Administrator', icon: UserCog,
     accentClass: 'active',
-    chipColor: 'rgba(124,58,237,0.15)', chipText: '#a78bfa', chipBorder: 'rgba(124,58,237,0.3)',
-    avatarGradient: 'linear-gradient(135deg,#7c3aed,#6366f1)',
-    logoGlow: 'rgba(124,58,237,0.5)',
+    chipColor: 'rgba(6,182,212,0.15)', chipText: '#22d3ee', chipBorder: 'rgba(6,182,212,0.3)',
+    avatarGradient: 'linear-gradient(135deg,#0891b2,#06b6d4)',
+    logoGlow: 'rgba(6,182,212,0.5)',
     sections: [
       { title:'Overview', items:[
         { name:'Dashboard',         icon:LayoutDashboard, path:'/admin/overview',    badge:null },
@@ -51,6 +52,8 @@ export default function Sidebar({ role, user }) {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const cfg = ROLE_NAV[role] || ROLE_NAV.admin;
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   useEffect(() => {
     if (role === 'admin') {
@@ -184,7 +187,7 @@ export default function Sidebar({ role, user }) {
         <div style={{ padding:'12px 14px', borderTop:'1px solid rgba(255,255,255,0.06)', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'8px' }}>
             {[
-              { l:'Students', v:studentCount, c:'#a78bfa' },
+              { l:'Students', v:studentCount, c:'#22d3ee' },
               { l:'Exams', v:examCount, c:'#22d3ee' },
               { l:'Alerts', v:stats?.alerts || '0', c:'#fb7185' },
             ].map(s=>(
@@ -213,3 +216,5 @@ export default function Sidebar({ role, user }) {
     </div>
   );
 }
+
+

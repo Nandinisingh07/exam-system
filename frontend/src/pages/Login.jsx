@@ -92,7 +92,7 @@ export default function Login() {
                 const RI = r.icon; const active = i === sel;
                 return (
                   <button key={r.role} id={`role-${r.role}`} onClick={() => pick(i)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', borderRadius: '14px', border: `1px solid ${active ? r.border : (dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.35)')}`, background: active ? `linear-gradient(135deg,${r.border.replace('0.35', '0.1')},transparent)` : (dark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.12)'), cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'all 0.25s', boxShadow: active ? `0 0 25px ${r.border.replace('0.35', '0.15')}` : 'none', transform: active ? 'translateX(3px)' : 'translateX(0)' }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', borderRadius: '14px', border: `1px solid ${active ? (dark ? r.border : 'rgba(255,255,255,0.8)') : (dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.35)')}`, background: active ? (dark ? `linear-gradient(135deg,${r.border.replace('0.35', '0.15')},transparent)` : 'rgba(255,255,255,0.30)') : (dark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.12)'), cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'all 0.25s', boxShadow: active ? `0 0 25px ${r.border.replace('0.35', '0.15')}` : 'none', transform: active ? 'translateX(3px)' : 'translateX(0)' }}>
                     <div style={{ width: '44px', height: '44px', borderRadius: '12px', flexShrink: 0, background: `linear-gradient(${r.gradient})`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 4px 15px ${r.border.replace('0.35', '0.4')}`, transform: active ? 'scale(1.08)' : 'scale(1)', transition: 'transform 0.25s' }}>
                       <RI size={20} color="#fff" />
                     </div>
@@ -178,7 +178,7 @@ export default function Login() {
                     style={{ paddingLeft: '40px', paddingRight: '44px' }}
                     placeholder="••••••••••" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="off" />
                   <button type="button" onClick={() => setShowPw(!showPw)}
-                    style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', display: 'flex' }}>
+                    style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: dark ? 'rgba(255,255,255,0.35)' : '#6366f1', cursor: 'pointer', display: 'flex' }}>
                     {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
                 </div>

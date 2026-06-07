@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+﻿import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Camera, RotateCcw, ShieldCheck, User, CreditCard, FileText,
   CheckCircle, XCircle, RefreshCcw, Loader2, Scan,
@@ -8,7 +8,7 @@ import {
 
 const API_BASE = 'https://decaf-brim-steadfast.ngrok-free.dev';
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function getToken() {
   return localStorage.getItem('token') || '';
@@ -26,7 +26,7 @@ async function apiPost(path, body) {
   });
   const data = await res.json();
   if (!res.ok) {
-    // FastAPI 422 returns detail as array of objects — flatten to string
+    // FastAPI 422 returns detail as array of objects â€” flatten to string
     const detail = data.detail;
     if (Array.isArray(detail)) {
       const msg = detail.map(e => `${e.loc?.slice(-1)?.[0] ?? 'field'}: ${e.msg}`).join(', ');
@@ -129,7 +129,7 @@ async function waitForVideoReady(videoEl, maxMs = 5000) {
   return false;
 }
 
-// ─── Step badge ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Step badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const STEPS = [
   { id: 1, label: 'Face Scan', icon: User, desc: 'Biometric face match' },
@@ -162,7 +162,7 @@ function StepBadge({ step, current, done, error }) {
   );
 }
 
-// ─── Webcam panel ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Webcam panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function WebcamPanel({ videoRef, streamActive, label, onFlip, hasMultipleCameras, facingMode, isMobile }) {
   return (
@@ -194,7 +194,7 @@ function WebcamPanel({ videoRef, streamActive, label, onFlip, hasMultipleCameras
         <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80">
           <div className="text-center">
             <Camera size={40} className="text-slate-600 mx-auto mb-2" />
-            <p className="text-slate-500 text-sm">Camera initializing…</p>
+            <p className="text-slate-500 text-sm">Camera initializingâ€¦</p>
           </div>
         </div>
       )}
@@ -209,17 +209,17 @@ function WebcamPanel({ videoRef, streamActive, label, onFlip, hasMultipleCameras
   );
 }
 
-// ─── Face Registration Modal ─────────────────────────────────────────────────
+// â”€â”€â”€ Face Registration Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-// ─── Fast Bulk Registration Modal ────────────────────────────────────────────
+// â”€â”€â”€ Fast Bulk Registration Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Drop this in to replace the existing RegisterModal in Kiosk.jsx
 //
 // WHAT'S DIFFERENT:
-//   • Auto-advances to next unregistered student after each success
-//   • SPACE or ENTER = capture + register in one shot (no separate buttons)
-//   • Shows "12 / 70 done" progress so you know where you are
-//   • Skips already-registered students (shown in green, can still re-do)
-//   • Keyboard-first: never need to touch the mouse
+//   â€¢ Auto-advances to next unregistered student after each success
+//   â€¢ SPACE or ENTER = capture + register in one shot (no separate buttons)
+//   â€¢ Shows "12 / 70 done" progress so you know where you are
+//   â€¢ Skips already-registered students (shown in green, can still re-do)
+//   â€¢ Keyboard-first: never need to touch the mouse
 
 function RegisterModal({ students, videoRef, onClose, onSuccess }) {
   const [queue, setQueue] = React.useState([]); // ordered list of students
@@ -230,7 +230,7 @@ function RegisterModal({ students, videoRef, onClose, onSuccess }) {
   const [registered, setRegistered] = React.useState(0);
   const inputRef = React.useRef(null);
 
-  // Build queue on mount — unregistered first, then registered
+  // Build queue on mount â€” unregistered first, then registered
   React.useEffect(() => {
     const unregistered = students.filter(s => !s.face_encoding);
     const alreadyDone = students.filter(s => s.face_encoding);
@@ -280,7 +280,7 @@ function RegisterModal({ students, videoRef, onClose, onSuccess }) {
     const frame = captureFrame(videoRef.current);
     if (!frame) {
       setStatus('error');
-      setMessage('No frame — wait for camera then press Space again');
+      setMessage('No frame â€” wait for camera then press Space again');
       return;
     }
 
@@ -296,7 +296,7 @@ function RegisterModal({ students, videoRef, onClose, onSuccess }) {
       setDoneIds(prev => new Set([...prev, current.id]));
       setRegistered(prev => prev + (doneIds.has(current.id) ? 0 : 1));
       setStatus('success');
-      setMessage(`Done — ${res.student_name}`);
+      setMessage(`Done â€” ${res.student_name}`);
       onSuccess?.(res);
 
       // Auto-advance after 800ms
@@ -384,7 +384,7 @@ function RegisterModal({ students, videoRef, onClose, onSuccess }) {
           >
             {status === 'capturing' && <><Loader2 size={16} className="animate-spin" /> Capturing...</>}
             {status === 'registering' && <><Loader2 size={16} className="animate-spin" /> Saving...</>}
-            {status === 'success' && <><CheckCircle size={16} /> Registered — next in 0.8s</>}
+            {status === 'success' && <><CheckCircle size={16} /> Registered â€” next in 0.8s</>}
             {status === 'error' && <><AlertTriangle size={16} /> Retry (Space)</>}
             {status === 'idle' && <><Camera size={16} /> Capture &amp; Register</>}
           </button>
@@ -400,7 +400,7 @@ function RegisterModal({ students, videoRef, onClose, onSuccess }) {
               disabled={idx === 0}
               className="flex items-center gap-1 text-xs text-slate-400 hover:text-white disabled:opacity-30 px-2 py-1"
             >
-              ← Prev
+              â† Prev
             </button>
             <span className="text-xs text-slate-500">
               {idx + 1} of {queue.length}
@@ -410,7 +410,7 @@ function RegisterModal({ students, videoRef, onClose, onSuccess }) {
               disabled={idx === queue.length - 1}
               className="flex items-center gap-1 text-xs text-slate-400 hover:text-white disabled:opacity-30 px-2 py-1"
             >
-              Next →
+              Next â†’
             </button>
           </div>
         </div>
@@ -418,8 +418,8 @@ function RegisterModal({ students, videoRef, onClose, onSuccess }) {
         {/* Keyboard hint */}
         <div className="px-5 pb-4 text-center">
           <p className="text-[11px] text-slate-600">
-            <kbd className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">Space</kbd> capture &nbsp;·&nbsp;
-            <kbd className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">←→</kbd> navigate &nbsp;·&nbsp;
+            <kbd className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">Space</kbd> capture &nbsp;Â·&nbsp;
+            <kbd className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">â†â†’</kbd> navigate &nbsp;Â·&nbsp;
             <kbd className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">Esc</kbd> close
           </p>
         </div>
@@ -449,7 +449,7 @@ function RegisterModal({ students, videoRef, onClose, onSuccess }) {
   );
 }
 
-// ─── Main Kiosk Component ────────────────────────────────────────────────────
+// â”€â”€â”€ Main Kiosk Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function Kiosk() {
   const videoRef = useRef(null);
@@ -513,9 +513,22 @@ export default function Kiosk() {
     return () => { if (stream) stream.getTracks().forEach(t => t.stop()); };
   }, [facingMode]);
 
-  // Load exams + students
+  const [myDuty, setMyDuty] = useState(null);
+
+  // Load duty first, then exams + students
   useEffect(() => {
-    apiGet('/api/logistics/exams').then(setExams).catch(console.error);
+    apiGet('/api/logistics/my-duty')
+      .then(duty => {
+        setMyDuty(duty);
+        apiGet('/api/logistics/exams').then(exams => {
+          setExams(exams);
+          const match = exams.find(e => e.subject_code === duty.code || e.subject_name === duty.exam);
+          if (match) setExamId(String(match.id));
+        }).catch(console.error);
+      })
+      .catch(() => {
+        apiGet('/api/logistics/exams').then(setExams).catch(console.error);
+      });
     apiGet('/api/students').then(setStudents).catch(() => setStudents([]));
   }, []);
 
@@ -537,16 +550,16 @@ export default function Kiosk() {
     setResult(null);
   }
 
-  // ── Step 1: Face scan ──────────────────────────────────────────────────────
+  // â”€â”€ Step 1: Face scan â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async function handleScanFace() {
     setLoading(true);
     setStepError('');
     try {
       const ready = await waitForVideoReady(videoRef.current, 5000);
-      if (!ready) throw new Error('Camera not ready — please wait a moment and try again');
+      if (!ready) throw new Error('Camera not ready â€” please wait a moment and try again');
 
       const frame = captureFrame(videoRef.current);
-      if (!frame) throw new Error('Could not capture frame — ensure camera is working');
+      if (!frame) throw new Error('Could not capture frame â€” ensure camera is working');
 
       const data = await apiPost('/api/verify/step-face', {
         exam_id: parseInt(examId),
@@ -562,20 +575,20 @@ export default function Kiosk() {
     }
   }
 
-  // ── Step 2: Admit card ────────────────────────────────────────────────────
+  // â”€â”€ Step 2: Admit card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async function handleScanAdmit() {
     setLoading(true);
     setStepError('');
     try {
-      if (!result?.student_id) throw new Error('Student not identified — please restart from Step 1');
+      if (!result?.student_id) throw new Error('Student not identified â€” please restart from Step 1');
 
       const ready = await waitForVideoReady(videoRef.current, 5000);
       if (!ready) throw new Error('Camera not ready');
 
-      setStepError('Hold admit card flat and still…');
+      setStepError('Hold admit card flat and stillâ€¦');
       const frame = await captureSharpestFrame(videoRef.current, 0.92, false);
       setStepError('');
-      if (!frame) throw new Error('Could not capture frame — check camera');
+      if (!frame) throw new Error('Could not capture frame â€” check camera');
 
       const payload = {
         exam_id: parseInt(examId),
@@ -588,7 +601,7 @@ export default function Kiosk() {
         admit_image_b64_len: payload.admit_image_b64?.length,
       });
       if (!payload.student_id || isNaN(payload.exam_id)) {
-        throw new Error(`Bad payload — student_id=${payload.student_id} exam_id=${payload.exam_id}`);
+        throw new Error(`Bad payload â€” student_id=${payload.student_id} exam_id=${payload.exam_id}`);
       }
       const data = await apiPost('/api/verify/step-admit', payload);
 
@@ -601,19 +614,19 @@ export default function Kiosk() {
     }
   }
 
-  // ── Step 3: ID card ───────────────────────────────────────────────────────
+  // â”€â”€ Step 3: ID card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async function handleScanID() {
     setLoading(true);
     setStepError('');
     try {
-      if (!result?.student_id) throw new Error('Student not identified — please restart from Step 1');
+      if (!result?.student_id) throw new Error('Student not identified â€” please restart from Step 1');
 
       const ready = await waitForVideoReady(videoRef.current, 5000);
       if (!ready) throw new Error('Camera not ready');
-      setStepError('Hold ID card flat and still…');
+      setStepError('Hold ID card flat and stillâ€¦');
       const frame = await captureSharpestFrame(videoRef.current, 0.92, false);
       setStepError('');
-      if (!frame) throw new Error('Could not capture frame — check camera');
+      if (!frame) throw new Error('Could not capture frame â€” check camera');
 
       const data = await apiPost('/api/verify/step-id', {
         exam_id: parseInt(examId),
@@ -629,7 +642,7 @@ export default function Kiosk() {
       setLoading(false);
     }
   }
-  // ── Terminate session ────────────────────────────────────────────────────
+  // â”€â”€ Terminate session â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function handleTerminate() {
     if (!terminateReason.trim()) return;
     console.warn(`[Kiosk] Session terminated. Reason: ${terminateReason}`);
@@ -638,7 +651,7 @@ export default function Kiosk() {
     resetKiosk();
   }
 
-  // ── Manual entry override ────────────────────────────────────────────────
+  // â”€â”€ Manual entry override â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async function handleManualEntry() {
     if (!manualEnrollment.trim()) { setManualError('Enter enrollment number'); return; }
     setManualLoading(true);
@@ -661,13 +674,13 @@ export default function Kiosk() {
       setManualLoading(false);
     }
   }
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const stepDone = id => step > id || (id === 4 && step === 4);
   const stepErr = id => stepError && step === id;
 
   return (
     <div className="min-h-screen bg-slate-950 text-white p-4 md:p-6">
-      {/* ── Terminate Session Modal ───────────────────────────────────────── */}
+      {/* â”€â”€ Terminate Session Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {showTerminate && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-rose-500/40 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
@@ -705,7 +718,7 @@ export default function Kiosk() {
         </div>
       )}
 
-      {/* ── Manual Entry Modal ────────────────────────────────────────────── */}
+      {/* â”€â”€ Manual Entry Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {showManual && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-amber-500/40 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
@@ -757,7 +770,7 @@ export default function Kiosk() {
             Entry Verification Terminal
           </h1>
           <p className="text-slate-400 text-xs mt-0.5">
-            Face + Admit Card + ID Card — AI confidence scoring
+            Face + Admit Card + ID Card â€” AI confidence scoring
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -790,7 +803,7 @@ export default function Kiosk() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-        {/* Left — webcam + exam select */}
+        {/* Left â€” webcam + exam select */}
         <div className="lg:col-span-3 flex flex-col gap-4">
           <WebcamPanel
             videoRef={videoRef}
@@ -801,33 +814,42 @@ export default function Kiosk() {
             onFlip={flipCamera}
             label={
               step === 0 ? 'Waiting for exam selection'
-                : step === 1 ? 'Position face in oval — then click Scan Face'
-                  : step === 2 ? 'Hold ADMIT CARD clearly in frame — then scan'
-                    : step === 3 ? 'Hold ID CARD clearly in frame — then scan'
+                : step === 1 ? 'Position face in oval â€” then click Scan Face'
+                  : step === 2 ? 'Hold ADMIT CARD clearly in frame â€” then scan'
+                    : step === 3 ? 'Hold ID CARD clearly in frame â€” then scan'
                       : 'Verification complete'
             }
           />
 
-          {/* Exam select */}
+          {/* Duty Info */}
           <div className="bg-slate-900 border border-slate-700 rounded-2xl p-4">
-            <label className="text-xs text-slate-400 mb-2 block font-medium uppercase tracking-wider">
-              Select Exam
-            </label>
-            <select
-              value={examId}
-              onChange={e => { setExamId(e.target.value); resetKiosk(); }}
-              disabled={loading}
-              className="w-full bg-slate-800 border border-slate-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500"
-            >
-              <option value="">— Choose exam —</option>
-              {exams.map(e => (
-                <option key={e.id} value={e.id}>{e.course_code} — {e.name}</option>
-              ))}
-            </select>
+            {myDuty ? (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-xs text-emerald-400 font-semibold uppercase tracking-wider">Duty Assigned</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><div className="text-slate-400 text-xs mb-0.5">Exam</div><div className="text-white font-semibold text-sm">{myDuty.code}</div><div className="text-slate-300 text-xs">{myDuty.exam}</div></div>
+                  <div><div className="text-slate-400 text-xs mb-0.5">Room</div><div className="text-white font-semibold text-sm">{myDuty.room}</div><div className="text-slate-300 text-xs">{myDuty.floor}</div></div>
+                  <div><div className="text-slate-400 text-xs mb-0.5">Date</div><div className="text-slate-200 text-xs">{myDuty.date}</div></div>
+                  <div><div className="text-slate-400 text-xs mb-0.5">Students</div><div className="text-slate-200 text-xs">{myDuty.totalStudents} assigned</div></div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label className="text-xs text-slate-400 mb-2 block font-medium uppercase tracking-wider">Select Exam</label>
+                <select value={examId} onChange={e => { setExamId(e.target.value); resetKiosk(); }} disabled={loading} className="w-full bg-slate-800 border border-slate-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500">
+                  <option value="">— Choose exam —</option>
+                  {exams.map(e => (<option key={e.id} value={e.id}>{e.subject_code} — {e.subject_name}</option>))}
+                </select>
+                <p className="text-amber-400 text-xs mt-2">No duty assigned. Contact admin.</p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right — steps + controls */}
+        {/* Right â€” steps + controls */}
         <div className="lg:col-span-2 flex flex-col gap-4">
           {/* Step indicators */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -845,7 +867,7 @@ export default function Kiosk() {
           {/* Action panel */}
           <div className="bg-slate-900 border border-slate-700 rounded-2xl p-5 flex-1">
 
-            {/* ── Idle ─────────────────────────────────────────── */}
+            {/* â”€â”€ Idle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {step === 0 && (
               <div className="text-center py-8">
                 <Zap size={40} className="text-violet-400 mx-auto mb-3" />
@@ -866,12 +888,12 @@ export default function Kiosk() {
               </div>
             )}
 
-            {/* ── Step 1: Face ──────────────────────────────────── */}
+            {/* â”€â”€ Step 1: Face â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {step === 1 && (
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <User size={18} className="text-violet-400" />
-                  <h2 className="font-bold">Step 1 of 3 — Face Biometric</h2>
+                  <h2 className="font-bold">Step 1 of 3 â€” Face Biometric</h2>
                 </div>
                 <p className="text-slate-400 text-sm mb-5">
                   Position face clearly in the oval guide, ensure good lighting,
@@ -892,7 +914,7 @@ export default function Kiosk() {
                     className="flex-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2 transition-all"
                   >
                     {loading
-                      ? <><Loader2 size={18} className="animate-spin" /> Scanning…</>
+                      ? <><Loader2 size={18} className="animate-spin" /> Scanningâ€¦</>
                       : <><Scan size={18} /> Scan Face</>}
                   </button>
                   {stepError && (
@@ -907,7 +929,7 @@ export default function Kiosk() {
               </div>
             )}
 
-            {/* ── Step 2: Admit card ────────────────────────────── */}
+            {/* â”€â”€ Step 2: Admit card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {step === 2 && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
@@ -919,7 +941,7 @@ export default function Kiosk() {
 
                 <div className="flex items-center gap-2 mb-4">
                   <FileText size={18} className="text-violet-400" />
-                  <h2 className="font-bold">Step 2 of 3 — Admit Card OCR</h2>
+                  <h2 className="font-bold">Step 2 of 3 â€” Admit Card OCR</h2>
                 </div>
                 <p className="text-slate-400 text-sm mb-5">
                   Hold the <strong className="text-white">admit card</strong> flat and fully visible
@@ -940,7 +962,7 @@ export default function Kiosk() {
                     className="flex-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2"
                   >
                     {loading
-                      ? <><Loader2 size={18} className="animate-spin" /> Scanning…</>
+                      ? <><Loader2 size={18} className="animate-spin" /> Scanningâ€¦</>
                       : <><Scan size={18} /> Scan Admit Card</>}
                   </button>
                   {stepError && (
@@ -955,19 +977,19 @@ export default function Kiosk() {
               </div>
             )}
 
-            {/* ── Step 3: ID card ───────────────────────────────── */}
+            {/* â”€â”€ Step 3: ID card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {step === 3 && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <CheckCircle size={16} className="text-emerald-400" />
                   <span className="text-emerald-400 text-sm font-semibold">
-                    Admit card verified — {result?.ocr_enrollment || result?.enrollment_no}
+                    Admit card verified â€” {result?.ocr_enrollment || result?.enrollment_no}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2 mb-4">
                   <CreditCard size={18} className="text-violet-400" />
-                  <h2 className="font-bold">Step 3 of 3 — ID Card OCR</h2>
+                  <h2 className="font-bold">Step 3 of 3 â€” ID Card OCR</h2>
                 </div>
                 <p className="text-slate-400 text-sm mb-5">
                   Hold the <strong className="text-white">college ID card</strong> facing the camera,
@@ -988,7 +1010,7 @@ export default function Kiosk() {
                     className="flex-1 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2"
                   >
                     {loading
-                      ? <><Loader2 size={18} className="animate-spin" /> Scanning…</>
+                      ? <><Loader2 size={18} className="animate-spin" /> Scanningâ€¦</>
                       : <><Scan size={18} /> Scan ID Card</>}
                   </button>
                   {stepError && (
@@ -1003,14 +1025,14 @@ export default function Kiosk() {
               </div>
             )}
 
-            {/* ── Step 4: Success ───────────────────────────────── */}
+            {/* â”€â”€ Step 4: Success â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {step === 4 && (
               <div className="text-center py-6">
                 <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4"
                   style={{ boxShadow: '0 0 30px rgba(16,185,129,0.3)' }}>
                   <CheckCircle size={36} className="text-emerald-400" />
                 </div>
-                <h2 className="text-2xl font-bold text-emerald-400 mb-1">Verified ✓</h2>
+                <h2 className="text-2xl font-bold text-emerald-400 mb-1">Verified âœ“</h2>
                 <p className="text-white text-lg font-semibold mb-1">{result?.student_name}</p>
                 <p className="text-slate-400 text-sm mb-1">#{result?.enrollment_no}</p>
                 <p className="text-slate-500 text-xs mb-5">
@@ -1027,13 +1049,13 @@ export default function Kiosk() {
                   </div>
                   <div className="bg-slate-800 rounded-xl p-3">
                     <div className="text-emerald-400 font-bold text-lg">
-                      {result?.ocr_match !== false ? '✓' : '~'}
+                      {result?.ocr_match !== false ? 'âœ“' : '~'}
                     </div>
                     <div className="text-slate-400 text-xs">Admit Card</div>
                   </div>
                   <div className="bg-slate-800 rounded-xl p-3">
                     <div className="text-emerald-400 font-bold text-lg">
-                      {result?.id_match !== false ? '✓' : '~'}
+                      {result?.id_match !== false ? 'âœ“' : '~'}
                     </div>
                     <div className="text-slate-400 text-xs">ID Card</div>
                   </div>
@@ -1049,7 +1071,7 @@ export default function Kiosk() {
             )}
           </div>
 
-          {/* Bottom action bar — visible during active verification */}
+          {/* Bottom action bar â€” visible during active verification */}
           {step > 0 && step < 4 && (
             <div className="flex gap-2">
               <button
@@ -1079,3 +1101,4 @@ export default function Kiosk() {
     </div>
   );
 }
+

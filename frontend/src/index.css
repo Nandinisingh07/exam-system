@@ -4,9 +4,9 @@
 @theme {
   --font-sans: 'Inter', 'Plus Jakarta Sans', sans-serif;
   --font-display: 'Sora', 'Plus Jakarta Sans', sans-serif;
-  --color-bg-base:    #dbeafe;
-  --color-bg-mid:     #e0f2fe;
-  --color-bg-surface: #f0f9ff;
+  --color-bg-base:    #080c12;
+  --color-bg-mid:     #0c1118;
+  --color-bg-surface: #101620;
   --color-cyan-300: #67e8f9;
   --color-cyan-400: #22d3ee;
   --color-cyan-500: #06b6d4;
@@ -27,14 +27,14 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 50%, #f0f9ff 100%); background-attachment: fixed;
-  color: #0f172a;
+  background-color: #0f1623;
+  color: rgba(255,255,255,0.87);
   font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-::selection { background: rgba(6,182,212,0.25); color: #0f172a; }
+::selection { background: rgba(6,182,212,0.35); color: #fff; }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -51,11 +51,11 @@ body {
   --rose:          #f43f5e;
   --emerald:       #10b981;
   --amber:         #f59e0b;
-  --card-bg:       rgba(255,255,255,0.70);
-  --card-border:   rgba(14,165,233,0.18);
-  --divider:       rgba(14,165,233,0.12);
-  --text-muted:    rgba(15,23,42,0.50);
-  --text-body:     rgba(15,23,42,0.80);
+  --card-bg:       rgba(255,255,255,0.038);
+  --card-border:   rgba(255,255,255,0.08);
+  --divider:       rgba(255,255,255,0.06);
+  --text-muted:    rgba(255,255,255,0.42);
+  --text-body:     rgba(255,255,255,0.72);
 }
 
 /* -- Glassmorphism -------------------------------------------------- */
@@ -71,7 +71,7 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(14,165,233,0.10), inset 0 1px 0 rgba(255,255,255,0.8);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05);
   transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
 }
 .glass-card:hover {
@@ -431,7 +431,6 @@ body {
 .stat-accent-emerald::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#059669,#10b981); }
 .stat-accent-amber::before   { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#d97706,#f59e0b); }
 .stat-accent-rose::before    { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#be123c,#f43f5e); }
-
 
 
 

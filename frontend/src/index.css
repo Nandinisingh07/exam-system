@@ -588,3 +588,88 @@ body {
 
 /* Icons */
 [data-theme="light"] svg { color: inherit; }
+
+/* ── Light mode: final visibility fixes ───────────────────────── */
+
+/* Confirmed/status badges */
+[data-theme="light"] [class*="border-emerald"][class*="text-emerald"] { 
+  color: #065f46 !important; border-color: #059669 !important; 
+  background: rgba(16,185,129,0.12) !important;
+}
+[data-theme="light"] [class*="text-emerald-400"] { color: #065f46 !important; }
+[data-theme="light"] [class*="text-emerald-300"] { color: #047857 !important; }
+
+/* Upload box */
+[data-theme="light"] [class*="border-dashed"] { 
+  border-color: #94a3b8 !important; 
+  background: rgba(241,245,249,0.8) !important;
+}
+[data-theme="light"] [class*="border-dashed"] p,
+[data-theme="light"] [class*="border-dashed"] span { color: #475569 !important; }
+
+/* Recharts / SVG graphs */
+[data-theme="light"] .recharts-text { fill: #334155 !important; }
+[data-theme="light"] .recharts-cartesian-axis-tick-value { fill: #334155 !important; }
+[data-theme="light"] .recharts-legend-item-text { color: #334155 !important; }
+[data-theme="light"] .recharts-cartesian-grid-horizontal line,
+[data-theme="light"] .recharts-cartesian-grid-vertical line { stroke: #e2e8f0 !important; }
+[data-theme="light"] .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+[data-theme="light"] .recharts-tooltip-item { color: #0f172a !important; }
+[data-theme="light"] .recharts-tooltip-label { color: #334155 !important; }
+
+/* Any remaining faded inline-style text */
+[data-theme="light"] [style*="color: rgba(255,255,255,0.3"],
+[data-theme="light"] [style*="color: rgba(255,255,255,0.2"],
+[data-theme="light"] [style*="color: rgba(255,255,255,0.4"],
+[data-theme="light"] [style*="color: rgba(255,255,255,0.5"],
+[data-theme="light"] [style*="color: rgba(255,255,255,0.6"],
+[data-theme="light"] [style*="color: rgba(255,255,255,0.7"],
+[data-theme="light"] [style*="color:rgba(255,255,255"] { color: #334155 !important; }
+
+/* Dark card/panel backgrounds */
+[data-theme="light"] [style*="background: rgba(12,12"],
+[data-theme="light"] [style*="background: rgba(15,15"],
+[data-theme="light"] [style*="background: rgba(10,10"],
+[data-theme="light"] [style*="background:rgba(12,12"],
+[data-theme="light"] [style*="background:#08081"],
+[data-theme="light"] [style*="background: #08081"],
+[data-theme="light"] [style*="background: #0a0a"],
+[data-theme="light"] [style*="background:#0a0a"] { 
+  background: #ffffff !important; 
+  border-color: #e2e8f0 !important;
+}
+
+/* Tag/chip backgrounds */
+[data-theme="light"] [style*="background: rgba(255,255,255,0.06)"],
+[data-theme="light"] [style*="background:rgba(255,255,255,0.06)"],
+[data-theme="light"] [style*="background: rgba(255,255,255,0.04)"],
+[data-theme="light"] [style*="background: rgba(255,255,255,0.03)"] { 
+  background: #f1f5f9 !important; 
+}
+
+/* Manual badge */
+[data-theme="light"] [class*="bg-slate-800"],
+[data-theme="light"] [class*="bg-slate-900"],
+[data-theme="light"] [class*="bg-slate-950"] { 
+  background-color: #f1f5f9 !important; 
+  color: #1e293b !important;
+}
+
+/* Inline style border overrides */
+[data-theme="light"] [style*="border: 1px solid rgba(255,255,255,0.0"],
+[data-theme="light"] [style*="border:1px solid rgba(255,255,255,0.0"],
+[data-theme="light"] [style*="borderColor: rgba(255,255,255"] { 
+  border-color: #e2e8f0 !important; 
+}
+
+/* Inline style backgrounds that are near-black */
+[data-theme="light"] [style*="rgba(255,255,255,0.038)"],
+[data-theme="light"] [style*="rgba(255,255,255,0.05)"],
+[data-theme="light"] [style*="rgba(255,255,255,0.04)"],
+[data-theme="light"] [style*="rgba(255,255,255,0.03)"] { 
+  background: rgba(255,255,255,0.95) !important; 
+}

@@ -1,0 +1,7 @@
+﻿f = open(r"C:\Users\Nandini singh\Exam-System\backend\app\routers\admin.py", "r", encoding="utf-8")
+content = f.read()
+f.close()
+idx = content.find("# Room Data")
+print("ROOMS:", repr(content[idx:idx+400]))
+idx2 = content.find("pie = [")
+print("PIE:", repr(content[idx2:idx2+300]))

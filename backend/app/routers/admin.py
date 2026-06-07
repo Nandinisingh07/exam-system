@@ -32,35 +32,47 @@ def get_overview(db: Session = Depends(get_db), _: User = Depends(require_admin)
         "alerts": alerts
     }
     
-    # Attendance Data
-    attendance_data = [
-        {"day": "Mon", "present": 1120, "absent": 164},
-        {"day": "Tue", "present": 1198, "absent": 86},
-        {"day": "Wed", "present": 1082, "absent": 202},
-        {"day": "Thu", "present": 1240, "absent": 44},
-        {"day": "Fri", "present": 1167, "absent": 117},
-        {"day": "Sat", "present": 954, "absent": 330},
-    ]
+    # Real Attendance Data - last 6 days
+    attendance_data = []
+    for i in range(5, -1, -1):
+        day_start = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day_start + timedelta(days=1)
+        present = db.query(func.count(AttendanceRecord.id)).filter(
+            AttendanceRecord.timestamp >= day_start,
+            AttendanceRecord.timestamp < day_end,
+            AttendanceRecord.status == "Present"
+        ).scalar() or 0
+        absent = db.query(func.count(AttendanceRecord.id)).filter(
+            AttendanceRecord.timestamp >= day_start,
+            AttendanceRecord.timestamp < day_end,
+            AttendanceRecord.status == "Absent"
+        ).scalar() or 0
+        attendance_data.append({
+            "day": day_start.strftime("%a"),
+            "present": present,
+            "absent": absent
+        })
     
-    # Room Data
+    # Real Room Data
     classrooms = db.query(Classroom).all()
     rooms = []
     for room in classrooms:
-        # Mock logic
+        duty = db.query(DutyAssignment).filter(DutyAssignment.classroom_id == room.id).first()
+        seated = db.query(func.count(SeatAllocation.id)).filter(SeatAllocation.classroom_id == room.id).scalar() or 0
+        washroom_alerts = db.query(func.count(WashroomLog.id)).filter(
+            WashroomLog.classroom_id == room.id,
+            WashroomLog.entry_time == None
+        ).scalar() or 0
+        invigilator_name = duty.teacher.full_name if duty and duty.teacher else "Unassigned"
+        exam_code = duty.exam.subject_code if duty and duty.exam else "-"
         rooms.append({
             "room": room.room_number,
             "capacity": room.capacity,
-            "seated": room.capacity - 2, # Fake data
-            "invigilator": "Prof. A. Kumar",
-            "status": "Active" if len(rooms) % 2 == 0 else "Alert",
-            "exam": "CS-402"
+            "seated": seated,
+            "invigilator": invigilator_name,
+            "status": "Alert" if washroom_alerts > 0 else "Active",
+            "exam": exam_code
         })
-    
-    if not rooms:
-        rooms = [
-            {"room": "101", "capacity": 40, "seated": 38, "invigilator": "Prof. A. Kumar", "status": "Active", "exam": "CS-402"},
-            {"room": "102", "capacity": 40, "seated": 40, "invigilator": "Dr. S. Mehta", "status": "Active", "exam": "CS-402"},
-        ]
 
     # Real Activity Feed
     logs = db.query(VerificationLog).order_by(VerificationLog.timestamp.desc()).limit(5).all()
@@ -86,16 +98,33 @@ def get_overview(db: Session = Depends(get_db), _: User = Depends(require_admin)
     if not feed:
         feed = [{"msg": "System operational. No recent activity.", "room": "-", "time": "Now", "s": "info"}]
     
+    total_alloc = db.query(func.count(SeatAllocation.id)).scalar() or 0
+    verified_count = db.query(func.count(VerificationLog.id)).filter(
+        VerificationLog.status == "Success",
+        VerificationLog.timestamp >= today_start
+    ).scalar() or 0
+    pending_count = max(0, total_alloc - verified_count)
+    absent_count = db.query(func.count(AttendanceRecord.id)).filter(
+        AttendanceRecord.status == "Absent",
+        AttendanceRecord.timestamp >= today_start
+    ).scalar() or 0
+
     pie = [
-        {"name": "Verified", "value": 1082, "color": "#7c3aed"},
-        {"name": "Pending", "value": 142, "color": "#f59e0b"},
-        {"name": "Absent", "value": 60, "color": "#f43f5e"},
+        {"name": "Verified", "value": verified_count, "color": "#7c3aed"},
+        {"name": "Pending", "value": pending_count, "color": "#f59e0b"},
+        {"name": "Absent", "value": absent_count, "color": "#f43f5e"},
     ]
-    
-    verify_data = [
-        {"time": "8AM", "v": 0}, {"time": "9AM", "v": 312}, {"time": "10AM", "v": 487},
-        {"time": "11AM", "v": 620}, {"time": "12PM", "v": 589}, {"time": "1PM", "v": 204}, {"time": "2PM", "v": 145},
-    ]
+
+    verify_data = []
+    for hour in range(8, 15):
+        h_start = now.replace(hour=hour, minute=0, second=0, microsecond=0)
+        h_end = h_start + timedelta(hours=1)
+        count = db.query(func.count(VerificationLog.id)).filter(
+            VerificationLog.timestamp >= h_start,
+            VerificationLog.timestamp < h_end,
+            VerificationLog.status == "Success"
+        ).scalar() or 0
+        verify_data.append({"time": f"{hour}AM" if hour < 12 else f"{hour-12}PM", "v": count})
 
     return {
         "stats": stats,

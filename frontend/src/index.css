@@ -509,3 +509,82 @@ body {
 [data-theme="light"] [style*="background:'rgba(12,12"] { background-color: #ffffff !important; }
 
 [data-theme="light"] .via-\[#0a0a0f\] { --tw-gradient-via: #e8eeff !important; }
+
+/* ── Light mode: aggressive visibility fixes ──────────────────── */
+[data-theme="light"] {
+  color-scheme: light;
+}
+
+/* All faded/muted text → readable dark */
+[data-theme="light"] .text-slate-400 { color: #475569 !important; }
+[data-theme="light"] .text-slate-500 { color: #334155 !important; }
+[data-theme="light"] .text-slate-600 { color: #1e293b !important; }
+[data-theme="light"] .text-indigo-400 { color: #4338ca !important; }
+[data-theme="light"] .text-violet-400 { color: #6d28d9 !important; }
+[data-theme="light"] .text-cyan-400 { color: #0e7490 !important; }
+[data-theme="light"] .text-emerald-400 { color: #065f46 !important; }
+
+/* Page titles and headings */
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] h4 { color: #0f172a !important; }
+
+/* Gradient text that becomes invisible */
+[data-theme="light"] .text-gradient { 
+  background: linear-gradient(135deg, #1e3a8a, #1d4ed8) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Labels, uppercase section titles */
+[data-theme="light"] .uppercase.tracking-widest,
+[data-theme="light"] .uppercase.tracking-wider { color: #334155 !important; }
+
+/* Table headers */
+[data-theme="light"] th,
+[data-theme="light"] [class*="uppercase"][class*="text-"] { color: #1e40af !important; }
+
+/* Card backgrounds */
+[data-theme="light"] .glass-card,
+[data-theme="light"] .glass { 
+  background: rgba(255,255,255,0.95) !important;
+  border-color: rgba(30,58,138,0.12) !important;
+  box-shadow: 0 2px 12px rgba(30,58,138,0.08) !important;
+}
+
+/* Buttons with low opacity bg */
+[data-theme="light"] [class*="bg-indigo-500/1"],
+[data-theme="light"] [class*="bg-violet-500/1"],
+[data-theme="light"] [class*="bg-white/[0.0"] {
+  background-color: rgba(241,245,249,0.95) !important;
+}
+
+/* Input fields */
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder { color: #94a3b8 !important; }
+
+/* Tabs and active states */
+[data-theme="light"] [class*="from-indigo"][class*="to-violet"] {
+  background: rgba(224,231,255,0.8) !important;
+}
+
+/* All paragraph/span text */
+[data-theme="light"] p { color: #334155; }
+[data-theme="light"] span:not([class*="text-emerald"]):not([class*="text-rose"]):not([class*="text-amber"]) { 
+  color: inherit; 
+}
+
+/* Dividers and borders */
+[data-theme="light"] [class*="border-white"] { border-color: #e2e8f0 !important; }
+[data-theme="light"] [class*="divide-white"] { border-color: #e2e8f0 !important; }
+
+/* Icons */
+[data-theme="light"] svg { color: inherit; }

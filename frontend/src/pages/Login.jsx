@@ -57,7 +57,7 @@ export default function Login() {
   const Icon = card.icon;
 
   const labelStyle = {
-    display: 'block', fontSize: '11px', fontWeight: 700, color: dark ? 'rgba(255,255,255,0.4)' : '#3730a3',
+    display: 'block', fontSize: '11px', fontWeight: 700, color: dark ? 'rgba(255,255,255,0.4)' : '#1e1b4b',
     textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '7px'
   };
 
@@ -101,9 +101,9 @@ export default function Login() {
                         <p style={{ fontSize: '14px', fontWeight: 600, color: active ? '#fff' : (dark ? 'rgba(255,255,255,0.7)' : '#ffffff') }}>{r.label}</p>
                         {active && <span className="badge-info" style={{ fontSize: '9px' }}>{r.tag}</span>}
                       </div>
-                      <p style={{ fontSize: '12px', color: dark ? 'rgba(255,255,255,0.4)' : '#6b7280', marginTop: '2px' }}>{r.desc}</p>
+                      <p style={{ fontSize: '12px', color: dark ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.9)', marginTop: '2px' }}>{r.desc}</p>
                     </div>
-                    <ChevronRight size={15} color={active ? '#a78bfa' : 'rgba(255,255,255,0.2)'} />
+                    <ChevronRight size={15} color={active ? '#a78bfa' : (dark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.9)')} />
                   </button>
                 );
               })}
@@ -162,7 +162,7 @@ export default function Login() {
               <div>
                 <label style={labelStyle}>Email Address</label>
                 <div style={{ position: 'relative' }}>
-                  <Mail size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+                  <Mail size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: dark ? 'rgba(255,255,255,0.3)' : '#6366f1' }} />
                   <input id="login-email" type="email" className="seas-input" style={{ paddingLeft: '40px' }}
                     placeholder="name@university.edu" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
                 </div>
@@ -173,7 +173,7 @@ export default function Login() {
                   <button type="button" style={{ fontSize: '12px', color: '#a78bfa', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}>Forgot?</button>
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <Lock size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+                  <Lock size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: dark ? 'rgba(255,255,255,0.3)' : '#6366f1' }} />
                   <input id="login-password" type={showPw ? 'text' : 'password'} className="seas-input"
                     style={{ paddingLeft: '40px', paddingRight: '44px' }}
                     placeholder="••••••••••" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
@@ -193,12 +193,12 @@ export default function Login() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span className="live-dot" /><span style={{ fontSize: '12px', color: dark ? 'rgba(255,255,255,0.35)' : '#6b7280', marginLeft: '4px' }}>System Online</span>
               </div>
-              <span style={{ fontSize: '11px', color: dark ? 'rgba(255,255,255,0.2)' : '#9ca3af' }}>SEAS v2.0 · Secured</span>
+              <span style={{ fontSize: '11px', color: dark ? 'rgba(255,255,255,0.2)' : '#6b7280' }}>SEAS v2.0 · Secured</span>
             </div>
           </div>
         </div>
 
-        <p style={{ textAlign: 'center', marginTop: '36px', fontSize: '12px', color: dark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)' }}>
+        <p style={{ textAlign: 'center', marginTop: '36px', fontSize: '12px', color: dark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.9)' }}>
           © 2026 Smart Examination Automated System · All rights reserved
         </p>
       </div>

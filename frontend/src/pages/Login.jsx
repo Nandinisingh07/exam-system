@@ -57,7 +57,7 @@ export default function Login() {
   const Icon = card.icon;
 
   const labelStyle = {
-    display: 'block', fontSize: '11px', fontWeight: 700, color: dark ? 'rgba(255,255,255,0.4)' : '#1e1b4b',
+    display: 'block', fontSize: '11px', fontWeight: 700, color: '#ffffff',
     textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '7px'
   };
 
@@ -80,7 +80,7 @@ export default function Login() {
           <h1 style={{ fontFamily: 'Sora,sans-serif', fontSize: '34px', fontWeight: 800, letterSpacing: '-0.03em', color: dark ? '#fff' : '#ffffff', marginBottom: '6px' }}>
             Smart Examination <span className="text-gradient">Automated</span> System
           </h1>
-          <p style={{ color: dark ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.92)', fontSize: '13px' }}>Biometric Verification · Real-time Monitoring · University Grade</p>
+          <p style={{ color: '#ffffff', fontSize: '13px' }}>Biometric Verification · Real-time Monitoring · University Grade</p>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: '24px', alignItems: 'start' }}>
@@ -98,10 +98,10 @@ export default function Login() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <p style={{ fontSize: '14px', fontWeight: 600, color: active ? '#fff' : (dark ? 'rgba(255,255,255,0.7)' : '#ffffff') }}>{r.label}</p>
+                        <p style={{ fontSize: '14px', fontWeight: 600, color: '#ffffff' }}>{r.label}</p>
                         {active && <span className="badge-info" style={{ fontSize: '9px' }}>{r.tag}</span>}
                       </div>
-                      <p style={{ fontSize: '12px', color: dark ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.9)', marginTop: '2px' }}>{r.desc}</p>
+                      <p style={{ fontSize: '12px', color: '#ffffff', marginTop: '2px' }}>{r.desc}</p>
                     </div>
                     <ChevronRight size={15} color={active ? '#a78bfa' : (dark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.9)')} />
                   </button>
@@ -114,7 +114,7 @@ export default function Login() {
                 <div key={t.l} className="glass-card" style={{ padding: '12px', textAlign: 'center', cursor: 'default' }}>
                   <div style={{ fontSize: '20px', marginBottom: '4px' }}>{t.icon}</div>
                   <div style={{ fontSize: '13px', fontWeight: 700, color: dark ? '#fff' : '#111827' }}>{t.v}</div>
-                  <div style={{ fontSize: '10px', color: dark ? 'rgba(255,255,255,0.4)' : '#374151', marginTop: '1px' }}>{t.l}</div>
+                  <div style={{ fontSize: '10px', color: '#ffffff', marginTop: '1px' }}>{t.l}</div>
                 </div>
               ))}
             </div>
@@ -123,13 +123,13 @@ export default function Login() {
               <p style={{ fontSize: '10px', color: '#ffffff', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Demo Credentials</p>
               {ROLES.map(r => (
                 <div key={r.role} style={{ display: 'flex', gap: '8px', fontSize: '11px', marginBottom: '5px' }}>
-                  <span style={{ color: dark ? 'rgba(255,255,255,0.5)' : '#ffffff', minWidth: '90px' }}>{r.label}:</span>
-                  <code style={{ color: dark ? 'rgba(255,255,255,0.35)' : '#ffffff' }}>{r.email} / {r.pw}</code>
+                  <span style={{ color: '#ffffff', minWidth: '90px' }}>{r.label}:</span>
+                  <code style={{ color: '#ffffff' }}>{r.email} / {r.pw}</code>
                 </div>
               ))}
               <div style={{ display: 'flex', gap: '8px', fontSize: '11px', marginBottom: '5px', marginTop: '8px' }}>
-                <span style={{ color: dark ? 'rgba(255,255,255,0.5)' : '#ffffff', minWidth: '90px' }}>Custom Invig:</span>
-                <span style={{ color: dark ? 'rgba(255,255,255,0.35)' : '#ffffff' }}>Check Admin Panel -&gt; Invigilators</span>
+                <span style={{ color: '#ffffff', minWidth: '90px' }}>Custom Invig:</span>
+                <span style={{ color: '#ffffff' }}>Check Admin Panel -&gt; Invigilators</span>
               </div>
             </div>
           </div>
@@ -146,7 +146,7 @@ export default function Login() {
                 <h2 style={{ fontFamily: 'Sora,sans-serif', fontSize: '18px', fontWeight: 700, color: dark ? '#fff' : '#111827', letterSpacing: '-0.02em' }}>
                   Sign in as {card.label}
                 </h2>
-                <p style={{ fontSize: '12px', color: dark ? 'rgba(255,255,255,0.4)' : '#6b7280', marginTop: '2px' }}>
+                <p style={{ fontSize: '12px', color: '#ffffff', marginTop: '2px' }}>
                   Access the SEAS platform
                 </p>
               </div>
@@ -162,7 +162,7 @@ export default function Login() {
               <div>
                 <label style={labelStyle}>Email Address</label>
                 <div style={{ position: 'relative' }}>
-                  <Mail size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: dark ? 'rgba(255,255,255,0.3)' : '#6366f1' }} />
+                  <Mail size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#ffffff' }} />
                   <input id="login-email" type="email" className="seas-input" style={{ paddingLeft: '40px' }}
                     placeholder="name@university.edu" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
                 </div>
@@ -173,7 +173,7 @@ export default function Login() {
                   <button type="button" style={{ fontSize: '12px', color: '#a78bfa', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}>Forgot?</button>
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <Lock size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: dark ? 'rgba(255,255,255,0.3)' : '#6366f1' }} />
+                  <Lock size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#ffffff' }} />
                   <input id="login-password" type={showPw ? 'text' : 'password'} className="seas-input"
                     style={{ paddingLeft: '40px', paddingRight: '44px' }}
                     placeholder="••••••••••" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
@@ -191,14 +191,14 @@ export default function Login() {
 
             <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="live-dot" /><span style={{ fontSize: '12px', color: dark ? 'rgba(255,255,255,0.35)' : '#6b7280', marginLeft: '4px' }}>System Online</span>
+                <span className="live-dot" /><span style={{ fontSize: '12px', color: '#ffffff', marginLeft: '4px' }}>System Online</span>
               </div>
-              <span style={{ fontSize: '11px', color: dark ? 'rgba(255,255,255,0.2)' : '#6b7280' }}>SEAS v2.0 · Secured</span>
+              <span style={{ fontSize: '11px', color: '#ffffff' }}>SEAS v2.0 · Secured</span>
             </div>
           </div>
         </div>
 
-        <p style={{ textAlign: 'center', marginTop: '36px', fontSize: '12px', color: dark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.9)' }}>
+        <p style={{ textAlign: 'center', marginTop: '36px', fontSize: '12px', color: '#ffffff' }}>
           © 2026 Smart Examination Automated System · All rights reserved
         </p>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Menu, X as XIcon } from 'lucide-react';
 import {
@@ -80,11 +80,11 @@ export default function Sidebar({ role, user }) {
 
   return (
     <div style={{ width:'280px', height:'100vh', position:'fixed', left:0, top:0, zIndex:50,
-                   background:'rgba(8,8,18,0.97)', borderRight:'1px solid rgba(255,255,255,0.06)',
+                   background:'var(--bg-sidebar)', borderRight:'1px solid var(--border)',
                    display:'flex', flexDirection:'column', backdropFilter:'blur(20px)' }}>
 
       {/* Logo */}
-      <div style={{ padding:'24px 20px 20px', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ padding:'24px 20px 20px', borderBottom:'1px solid var(--border)' }}>
         <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
           <div style={{ position:'relative', flexShrink:0 }}>
             <div style={{ position:'absolute', inset:'-4px', background:cfg.avatarGradient,
@@ -110,7 +110,7 @@ export default function Sidebar({ role, user }) {
       </div>
 
       {/* User profile */}
-      <div style={{ padding:'14px 16px', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ padding:'14px 16px', borderBottom:'1px solid var(--border)' }}>
         <div style={{ display:'flex', alignItems:'center', gap:'12px', padding:'10px 12px',
                        borderRadius:'12px', background:'rgba(255,255,255,0.03)',
                        border:'1px solid rgba(255,255,255,0.06)', cursor:'pointer',
@@ -184,7 +184,7 @@ export default function Sidebar({ role, user }) {
 
       {/* Quick stats for admin */}
       {role === 'admin' && (
-        <div style={{ padding:'12px 14px', borderTop:'1px solid rgba(255,255,255,0.06)', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ padding:'12px 14px', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)' }}>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'8px' }}>
             {[
               { l:'Students', v:studentCount, c:'#22d3ee' },
@@ -216,5 +216,6 @@ export default function Sidebar({ role, user }) {
     </div>
   );
 }
+
 
 

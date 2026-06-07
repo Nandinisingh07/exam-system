@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import { Bell, Search, X, CheckCircle, AlertTriangle, Info, User, Settings, LogOut, ChevronDown, Clock } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { Moon, Sun, Bell, Search, X, CheckCircle, AlertTriangle, Info, User, Settings, LogOut, ChevronDown, Clock } from 'lucide-react';
 
 const NOTIFICATIONS = [
   { id:1, type:'success', title:'Verification Complete', msg:'Student Alex Pierce verified successfully', time:'2m ago', read:false },
@@ -25,6 +26,7 @@ export default function Layout({ children }) {
   const [notifications, setNotifications] = useState(NOTIFICATIONS);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  const { dark, toggle } = useTheme();
   const notifRef = useRef(null);
   const profileRef = useRef(null);
 
@@ -62,15 +64,14 @@ export default function Layout({ children }) {
   };
 
   return (
-    <div style={{ display:'flex', background:'#0a0a0f', minHeight:'100vh' }}>
+    <div style={{ display:'flex', background:'var(--bg)', minHeight:'100vh' }}>
       <Sidebar role={user.role} user={user} />
 
       <div style={{ flex:1, marginLeft: window.innerWidth >= 768 ? '280px' : '0', display:'flex', flexDirection:'column', minHeight:'100vh' }}>
         {/* Navbar */}
-        <header style={{ height:'64px', borderBottom:'1px solid rgba(255,255,255,0.06)',
-                          display:'flex', alignItems:'center', justifyContent:'space-between',
+        <header style={{ height:'64px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between',
                           padding:'0 24px', position:'sticky', top:0, zIndex:40,
-                          background:'rgba(10,10,20,0.85)', backdropFilter:'blur(20px)',
+                          background:'var(--bg-navbar)', backdropFilter:'blur(20px)',
                           boxShadow:'0 1px 0 rgba(255,255,255,0.04)' }}>
           {/* Left */}
           <div style={{ display:'flex', alignItems:'center', gap:'16px' }}>
@@ -98,6 +99,16 @@ export default function Layout({ children }) {
               <span style={{ fontSize:'12px', fontWeight:600, color:'#34d399', marginLeft:'2px' }}>System Live</span>
             </div>
 
+                        {/* Theme toggle */}
+            <button onClick={toggle} title="Toggle theme"
+              style={{ width:'34px', height:'34px', borderRadius:'10px', border:'1px solid var(--border)',
+                        background:'var(--input-bg)', cursor:'pointer', display:'flex',
+                        alignItems:'center', justifyContent:'center', color:'var(--text-1)',
+                        transition:'all 0.2s ease', flexShrink:0 }}
+              onMouseOver={e=>e.currentTarget.style.background='var(--hover-bg)'}
+              onMouseOut={e=>e.currentTarget.style.background='var(--input-bg)'}>
+              {dark ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
             {/* Notifications */}
             <div ref={notifRef} style={{ position:'relative' }}>
               <button id="notif-btn" className="btn-icon" style={{ position:'relative' }}
@@ -244,5 +255,6 @@ export default function Layout({ children }) {
     </div>
   );
 }
+
 
 

@@ -67,10 +67,6 @@ def preprocess_for_ocr(image_bytes: bytes) -> list:
     results.append((b3.tobytes(), "sharpen_otsu"))
     _, b4 = cv2.imencode(".png", gray)
     results.append((b4.tobytes(), "gray_raw"))
-    try:
-        cv2.imwrite(r"C:/Users/Nandini singh/Desktop/ocr_debug.png", t1)
-    except Exception:
-        pass
     return results
 def extract_raw_text(image_bytes: bytes) -> str:
     WL = "-c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/.-: "
@@ -202,27 +198,23 @@ def extract_fields(text: str) -> dict:
 
 
     # Fast path: 0818 is fixed institute prefix, try all known branch codes
-    KNOWN_BRANCHES = ['CL', 'CS', 'DS', 'EC']
+    KNOWN_BRANCHES = ['CL', 'CS', 'CD', 'EC']
     if True:  # Always try institute prefix reconstruction
         # Find 6-digit sequences in raw text
         six_digits = re.findall(r'\d{6}', upper_text)
         if not six_digits:
             cleaned = re.sub(r'[^A-Z0-9]', '', upper_text)
             six_digits = re.findall(r'\d{6}', cleaned)
-        for suffix in six_digits:
-            for branch in KNOWN_BRANCHES:
-                candidate = '0818' + branch + suffix
-                if RGPV_PATTERN.match(candidate):
-                    print('[OCR] Enrollment candidate: ' + candidate)
-                    # Store all candidates, first one wins for now
-                    if True:  # Always prefer reconstructed
-                        fields['roll_number'] = candidate
-                        fields['roll_number_candidates'] = [
-                            '0818' + b + suffix for b in KNOWN_BRANCHES
-                        ]
-                    break
-            if 'roll_number' in fields:
-                break
+        all_candidates = []
+    for suffix in six_digits:
+        for branch in KNOWN_BRANCHES:
+            candidate = '0818' + branch + suffix
+            if RGPV_PATTERN.match(candidate):
+                all_candidates.append(candidate)
+    if all_candidates:
+        fields['roll_number_candidates'] = all_candidates
+        fields['roll_number'] = all_candidates[0]
+        print('[OCR] Enrollment candidates: ' + str(all_candidates))
 
     return fields
 

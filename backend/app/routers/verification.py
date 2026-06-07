@@ -287,9 +287,9 @@ async def verify_step_admit(
     # Extract semester from OCR raw text using Roman numeral regex
     import re as _re
     _sem_match = _re.search(
-        r"Sem(?:ester)?[a-z]*[\s:\-]*\s*(VIII|VII|VI|IV|III|IX|II|I|\d{1,2})",
+        r"Sem(?:ester)?[a-zA-Z]*[\s:\-]*\s*(VIII|VII|VI|IV|III|IX|II|I|\d{1,2})",
         raw_text, _re.IGNORECASE
-    )
+    ))
     ocr_sem = _sem_match.group(1).upper().strip() if _sem_match else None
     
     
@@ -392,7 +392,7 @@ async def verify_step_id(
         """Aggressive preprocessing specifically for barcode reading."""
         g = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape)==3 else image.copy()
         # Upscale 4x
-        g = cv2.resize(g, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
+        g = cv2.resize(g, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
         # Sharpen
         g = cv2.filter2D(g, -1, np.array([[-1,-1,-1],[-1,9,-1],[-1,-1,-1]]))
         # CLAHE for contrast
@@ -420,7 +420,7 @@ async def verify_step_id(
 
     # ── BARCODE: try every rotation + strip + enhancement ────────────────────
     h, w = img.shape[:2]
-    strips = {"full": img}
+    strips = {"full": img, "bottom_half": img[h//2:, :], "bottom_third": img[2*h//3:, :]}
     
     
     
@@ -428,15 +428,12 @@ async def verify_step_id(
     
     
 
-    probe_i = [0]
     for strip_name, strip in strips.items():
         if strip.size == 0:
             continue
         for rot in all_rotations(strip):
             # Try raw + enhanced
             enhanced = enhance_barcode(rot)
-            cv2.imwrite(r"C:\Users\Nandini singh\bc_" + strip_name + "_" + str(probe_i[0]) + ".jpg", enhanced)
-            probe_i[0] += 1
             for probe in [rot, enhanced]:
                 for val in decode_barcode(probe):
                     digits = re.sub(r"[^0-9]", "", val)

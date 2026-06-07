@@ -160,6 +160,11 @@ def encode_face_from_bytes(img_bytes: bytes):
 
     try:
         app = _get_arcface()
+        # Resize to max 480p for faster CPU inference
+        h, w = img.shape[:2]
+        if h > 480 or w > 640:
+            scale = min(480 / h, 640 / w)
+            img = cv2.resize(img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
         rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         faces = app.get(rgb)
         if not faces:

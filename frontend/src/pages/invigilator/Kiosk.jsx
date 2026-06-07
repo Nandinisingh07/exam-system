@@ -47,7 +47,7 @@ async function apiGet(path) {
 
 // Capture a JPEG frame from a <video> element.
 // Returns base64 string (no prefix) or null if frame is blank/not ready.
-function captureFrame(videoEl, quality = 0.92) {
+function captureFrame(videoEl, quality = 0.75) {
   if (!videoEl) return null;
   const w = videoEl.videoWidth;
   const h = videoEl.videoHeight;

@@ -77,7 +77,7 @@ export default function Login() {
               <Shield size={30} color="#fff" />
             </div>
           </div>
-          <h1 style={{ fontFamily: 'Sora,sans-serif', fontSize: '34px', fontWeight: 800, letterSpacing: '-0.03em', color: dark ? '#fff' : '#ffffff', marginBottom: '6px' }}>
+          <h1 style={{ fontFamily: 'Sora,sans-serif', fontSize: '34px', fontWeight: 900, letterSpacing: '-0.03em', color: dark ? '#fff' : '#ffffff', marginBottom: '6px' }}>
             Smart Examination <span className="text-gradient">Automated</span> System
           </h1>
           <p style={{ color: '#ffffff', fontSize: '13px' }}>Biometric Verification · Real-time Monitoring · University Grade</p>
@@ -86,7 +86,7 @@ export default function Login() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: '24px', alignItems: 'start' }}>
 
           <div>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: '14px' }}>Select Your Role</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: '14px', fontWeight: 800 }}>Select Your Role</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {ROLES.map((r, i) => {
                 const RI = r.icon; const active = i === sel;
@@ -98,10 +98,10 @@ export default function Login() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <p style={{ fontSize: '14px', fontWeight: 600, color: '#ffffff' }}>{r.label}</p>
+                        <p style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff' }}>{r.label}</p>
                         {active && <span className="badge-info" style={{ fontSize: '9px' }}>{r.tag}</span>}
                       </div>
-                      <p style={{ fontSize: '12px', color: '#ffffff', marginTop: '2px' }}>{r.desc}</p>
+                      <p style={{ fontSize: '12px', fontWeight: 600, color: '#ffffff', marginTop: '2px' }}>{r.desc}</p>
                     </div>
                     <ChevronRight size={15} color={active ? '#a78bfa' : (dark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.9)')} />
                   </button>
@@ -120,7 +120,7 @@ export default function Login() {
             </div>
 
             <div style={{ marginTop: '14px', padding: '12px 16px', background: dark ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.15)', border: dark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(255,255,255,0.3)', borderRadius: '12px' }}>
-              <p style={{ fontSize: '10px', color: '#ffffff', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Demo Credentials</p>
+              <p style={{ fontSize: '10px', color: '#ffffff', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Demo Credentials</p>
               {ROLES.map(r => (
                 <div key={r.role} style={{ display: 'flex', gap: '8px', fontSize: '11px', marginBottom: '5px' }}>
                   <span style={{ color: '#ffffff', minWidth: '90px' }}>{r.label}:</span>
@@ -146,7 +146,7 @@ export default function Login() {
                 <h2 style={{ fontFamily: 'Sora,sans-serif', fontSize: '18px', fontWeight: 700, color: dark ? '#fff' : '#111827', letterSpacing: '-0.02em' }}>
                   Sign in as {card.label}
                 </h2>
-                <p style={{ fontSize: '12px', color: '#ffffff', marginTop: '2px' }}>
+                <p style={{ fontSize: '12px', fontWeight: 600, color: '#ffffff', marginTop: '2px' }}>
                   Access the SEAS platform
                 </p>
               </div>
@@ -164,7 +164,7 @@ export default function Login() {
                 <div style={{ position: 'relative' }}>
                   <Mail size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#ffffff' }} />
                   <input id="login-email" type="email" className="seas-input" style={{ paddingLeft: '40px' }}
-                    placeholder="name@university.edu" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" />
+                    placeholder="name@university.edu" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="off" />
                 </div>
               </div>
               <div>
@@ -176,7 +176,7 @@ export default function Login() {
                   <Lock size={14} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#ffffff' }} />
                   <input id="login-password" type={showPw ? 'text' : 'password'} className="seas-input"
                     style={{ paddingLeft: '40px', paddingRight: '44px' }}
-                    placeholder="••••••••••" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" />
+                    placeholder="••••••••••" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="off" />
                   <button type="button" onClick={() => setShowPw(!showPw)}
                     style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', display: 'flex' }}>
                     {showPw ? <EyeOff size={15} /> : <Eye size={15} />}

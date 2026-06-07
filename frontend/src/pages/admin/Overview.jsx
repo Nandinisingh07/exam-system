@@ -51,7 +51,7 @@ function StatCard({ title, raw, display, sub, icon: Icon, accent, trend, tv }) {
         </div>
       </div>
       <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">{title}</p>
-      <p className="text-3xl font-black text-slate-800" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>{formatted}</p>
+      <p className="text-3xl font-black text-white" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>{formatted}</p>
       <p className="text-[10px] text-slate-500 mt-2">{sub}</p>
     </div>
   );
@@ -131,7 +131,7 @@ export default function Overview() {
               <Zap size={14} className="text-indigo-400" />
               <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Admin Command Center</span>
             </div>
-            <h1 className="text-3xl font-black text-slate-800 tracking-tight" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>
+            <h1 className="text-3xl font-black text-white tracking-tight" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>
               System <span className="text-gradient">Overview</span>
             </h1>
             <p className="text-xs text-slate-500 mt-1 flex items-center gap-2">

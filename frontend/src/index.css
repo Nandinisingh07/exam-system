@@ -1088,3 +1088,81 @@ body {
 }
 [data-theme="light"] .p-2\.5.rounded-lg.bg-indigo-500\/10,
 [data-theme="light"] .p-2\.5.rounded-lg.bg-indigo-500\/10 * { color: #3730a3 !important; }
+
+/* ?? Sidebar: full visibility fix ?????????????????????????????? */
+[data-theme="light"] aside,
+[data-theme="light"] [class*="sidebar"],
+[data-theme="light"] nav.sidebar {
+  background-color: #1e2a6e !important;
+}
+
+/* Section labels: OVERVIEW, ACADEMIC, OPERATIONS */
+[data-theme="light"] aside span.uppercase,
+[data-theme="light"] aside p.uppercase,
+[data-theme="light"] aside div.uppercase {
+  color: rgba(255,255,255,0.50) !important;
+  letter-spacing: 0.12em;
+  font-size: 10px;
+}
+
+/* All nav link text & icons */
+[data-theme="light"] .sidebar-link,
+[data-theme="light"] aside a,
+[data-theme="light"] aside button {
+  color: rgba(255,255,255,0.85) !important;
+}
+[data-theme="light"] .sidebar-link svg,
+[data-theme="light"] aside a svg,
+[data-theme="light"] aside button svg {
+  color: rgba(255,255,255,0.85) !important;
+}
+
+/* Hover */
+[data-theme="light"] .sidebar-link:hover,
+[data-theme="light"] aside a:hover,
+[data-theme="light"] aside button:hover {
+  color: #ffffff !important;
+  background: rgba(255,255,255,0.10) !important;
+}
+[data-theme="light"] .sidebar-link:hover svg,
+[data-theme="light"] aside a:hover svg { color: #ffffff !important; }
+
+/* Active link */
+[data-theme="light"] .sidebar-link.active,
+[data-theme="light"] aside a.active {
+  color: #ffffff !important;
+  background: rgba(99,102,241,0.35) !important;
+  border-left: 3px solid #818cf8 !important;
+}
+
+/* User card (System Administrator / Admin Account) */
+[data-theme="light"] aside .text-white,
+[data-theme="light"] aside [class*="text-white"] { color: #ffffff !important; }
+[data-theme="light"] aside .text-slate-400,
+[data-theme="light"] aside .text-slate-500 { color: rgba(255,255,255,0.55) !important; }
+
+/* Badge counts (e.g. "3" on Students) */
+[data-theme="light"] aside span[class*="rounded-full"],
+[data-theme="light"] aside span[class*="rounded-lg"] {
+  background: rgba(255,255,255,0.18) !important;
+  color: #ffffff !important;
+}
+
+/* Bottom stats: 3 Students / 0 Exams / 0 Alerts */
+[data-theme="light"] aside .text-cyan-400  { color: #67e8f9 !important; }
+[data-theme="light"] aside .text-emerald-400 { color: #6ee7b7 !important; }
+[data-theme="light"] aside .text-rose-400  { color: #fca5a5 !important; }
+[data-theme="light"] aside p.text-slate-500,
+[data-theme="light"] aside span.text-slate-500 { color: rgba(255,255,255,0.45) !important; }
+
+/* LIVE badge */
+[data-theme="light"] aside .live-dot { background: #4ade80 !important; }
+[data-theme="light"] aside span[class*="text-emerald"][class*="text-xs"] { color: #4ade80 !important; }
+
+/* Settings & Sign Out */
+[data-theme="light"] aside .text-slate-400 { color: rgba(255,255,255,0.65) !important; }
+
+/* SEAS logo text */
+[data-theme="light"] aside h1,
+[data-theme="light"] aside .text-sm.font-bold { color: #ffffff !important; }
+[data-theme="light"] aside p.text-xs { color: rgba(255,255,255,0.55) !important; }

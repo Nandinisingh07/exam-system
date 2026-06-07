@@ -886,3 +886,126 @@ body {
 /* ?? Scrollbar ??????????????????????????????????????????????? */
 [data-theme="light"] ::-webkit-scrollbar-thumb       { background: rgba(99,102,241,0.20) !important; }
 [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.38) !important; }
+
+/* ??????????????????????????????????????????????????????????????
+   LIGHT MODE ? Page-specific fixes
+   ?????????????????????????????????????????????????????????????? */
+
+/* ?? Overview/Dashboard: hero banner (black ? indigo gradient) ? */
+[data-theme="light"] .glass-card[class*="overflow-hidden"]:has(.text-gradient),
+[data-theme="light"] div[style*="background: linear-gradient(135deg, #0a0"],
+[data-theme="light"] div[style*="background:linear-gradient(135deg, #0a0"],
+[data-theme="light"] div[style*="background: linear-gradient(135deg, #08"],
+[data-theme="light"] div[style*="background: linear-gradient(135deg, rgb(10"],
+[data-theme="light"] div[style*="background: linear-gradient(to right, #08"],
+[data-theme="light"] div[style*="background: linear-gradient(to right, #0f"] {
+  background: linear-gradient(135deg, #3730a3 0%, #4f46e5 50%, #6366f1 100%) !important;
+  border-color: rgba(99,102,241,0.3) !important;
+}
+
+/* ?? Overview: stat card icon boxes ?????????????????????????? */
+[data-theme="light"] .glass-card .p-2.rounded-xl {
+  background: rgba(99,102,241,0.10) !important;
+  border-color: rgba(99,102,241,0.20) !important;
+}
+[data-theme="light"] .glass-card .p-2.rounded-xl svg {
+  color: #4f46e5 !important;
+}
+
+/* ?? Overview: stat card numbers ????????????????????????????? */
+[data-theme="light"] .glass-card .text-3xl,
+[data-theme="light"] .glass-card .text-4xl { color: #1e1b4b !important; }
+
+/* ?? Overview: "ADMIN COMMAND CENTER" label & hero text ?????? */
+[data-theme="light"] .text-gradient { color: #ffffff !important; }
+
+/* ?? ExamDuty: drop zone (dark bg ? light indigo tint) ??????? */
+[data-theme="light"] div[class*="border-dashed"] {
+  background: rgba(99,102,241,0.04) !important;
+  border-color: rgba(99,102,241,0.30) !important;
+}
+[data-theme="light"] div[class*="border-dashed"]:hover {
+  background: rgba(99,102,241,0.08) !important;
+  border-color: rgba(99,102,241,0.50) !important;
+}
+[data-theme="light"] div[class*="border-dashed"] p,
+[data-theme="light"] div[class*="border-dashed"] span,
+[data-theme="light"] div[class*="border-dashed"] svg { color: #4f46e5 !important; }
+
+/* ?? ExamDuty: info bar "visible to ALL / registered invigilators" */
+[data-theme="light"] div[class*="rounded"][class*="border"] p,
+[data-theme="light"] div[class*="rounded"][class*="border"] span {
+  color: #4338ca !important;
+}
+
+/* ?? All pages: any remaining white text on light bg ????????? */
+[data-theme="light"] main p,
+[data-theme="light"] main span:not([class*="badge"]):not([class*="live"]) {
+  color: #374151;
+}
+
+/* ?? Recharts in light mode ?????????????????????????????????? */
+[data-theme="light"] .recharts-cartesian-axis-tick-value { fill: #6b7280 !important; }
+[data-theme="light"] .recharts-cartesian-grid line { stroke: rgba(99,102,241,0.10) !important; }
+[data-theme="light"] .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: #ffffff !important;
+  border-color: rgba(99,102,241,0.20) !important;
+  color: #1e1b4b !important;
+}
+[data-theme="light"] .recharts-legend-item-text { color: #4b5563 !important; }
+
+/* ?? Login page ??????????????????????????????????????????????? */
+[data-theme="light"] .login-card,
+[data-theme="light"] form.glass-card {
+  background: #ffffff !important;
+  border-color: rgba(99,102,241,0.15) !important;
+  box-shadow: 0 8px 40px rgba(99,102,241,0.12) !important;
+}
+
+/* ?? Tabs (active/inactive) ??????????????????????????????????? */
+[data-theme="light"] button[class*="tab"][class*="active"],
+[data-theme="light"] button[aria-selected="true"] {
+  background: #6366f1 !important;
+  color: #ffffff !important;
+  border-color: #4f46e5 !important;
+}
+[data-theme="light"] button[class*="tab"]:not([class*="active"]),
+[data-theme="light"] button[aria-selected="false"] {
+  background: rgba(99,102,241,0.07) !important;
+  color: #4338ca !important;
+  border-color: rgba(99,102,241,0.15) !important;
+}
+
+/* ?? Status badges already colored ? keep them ???????????????? */
+[data-theme="light"] .badge-success,
+[data-theme="light"] span[class*="text-emerald"],
+[data-theme="light"] span[class*="text-green"] { color: #065f46 !important; }
+
+/* ?? Kiosk/verification steps ????????????????????????????????? */
+[data-theme="light"] .step-card,
+[data-theme="light"] [class*="step"] .glass-card {
+  background: #ffffff !important;
+  border-color: rgba(99,102,241,0.15) !important;
+}
+
+/* ?? Bottom sidebar stats (Students / Exams / Alerts) ????????? */
+[data-theme="light"] aside span[class*="text-cyan"],
+[data-theme="light"] aside span[class*="text-emerald"],
+[data-theme="light"] aside span[class*="text-rose"] {
+  filter: brightness(1.4);
+}
+[data-theme="light"] aside .text-slate-400,
+[data-theme="light"] aside .text-slate-500 { color: rgba(255,255,255,0.55) !important; }
+
+/* ?? Export / action buttons on reports page ?????????????????? */
+[data-theme="light"] .btn-primary {
+  background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.30) !important;
+}
+[data-theme="light"] .btn-primary:hover {
+  background: linear-gradient(135deg, #4338ca, #4f46e5) !important;
+  box-shadow: 0 4px 16px rgba(99,102,241,0.40) !important;
+  transform: translateY(-1px);
+}

@@ -5,6 +5,7 @@ import {
   ChevronRight, Sparkles, Lock, Mail, AlertCircle
 } from 'lucide-react';
 import { authApi } from '../services/api';
+import { useTheme } from '../context/ThemeContext';
 
 const ROLES = [
   { role: 'admin', label: 'Administrator', desc: 'Full system control & analytics', icon: UserCog, gradient: '135deg, #7c3aed, #6366f1', border: 'rgba(124,58,237,0.35)', email: 'admin@exam.com', pw: 'admin123', tag: 'Full Access' },
@@ -12,6 +13,7 @@ const ROLES = [
 ];
 
 export default function Login() {
+  const { dark } = useTheme();
   const [email, setEmail] = useState('admin@exam.com');
   const [password, setPassword] = useState('admin123');
   const [showPw, setShowPw] = useState(false);
@@ -55,12 +57,12 @@ export default function Login() {
   const Icon = card.icon;
 
   const labelStyle = {
-    display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.4)',
+    display: 'block', fontSize: '11px', fontWeight: 700, color: dark ? 'rgba(255,255,255,0.4)' : '#3730a3',
     textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '7px'
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0f', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative', overflow: 'hidden' }}
+    <div style={{ minHeight: '100vh', background: dark ? '#0a0a0f' : '#2233a8', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative', overflow: 'hidden' }}
       className="bg-grid">
 
       <div style={{ position: 'absolute', top: '-120px', left: '-80px', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(124,58,237,0.22) 0%, transparent 70%)', borderRadius: '50%', filter: 'blur(80px)', animation: 'aurora 10s ease-in-out infinite' }} />
@@ -75,16 +77,16 @@ export default function Login() {
               <Shield size={30} color="#fff" />
             </div>
           </div>
-          <h1 style={{ fontFamily: 'Sora,sans-serif', fontSize: '34px', fontWeight: 800, letterSpacing: '-0.03em', color: '#fff', marginBottom: '6px' }}>
+          <h1 style={{ fontFamily: 'Sora,sans-serif', fontSize: '34px', fontWeight: 800, letterSpacing: '-0.03em', color: dark ? '#fff' : '#ffffff', marginBottom: '6px' }}>
             Smart Examination <span className="text-gradient">Automated</span> System
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>Biometric Verification · Real-time Monitoring · University Grade</p>
+          <p style={{ color: dark ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.75)', fontSize: '13px' }}>Biometric Verification · Real-time Monitoring · University Grade</p>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: '24px', alignItems: 'start' }}>
 
           <div>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: '14px' }}>Select Your Role</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: dark ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.85)', textTransform: 'uppercase', letterSpacing: '0.16em', marginBottom: '14px' }}>Select Your Role</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {ROLES.map((r, i) => {
                 const RI = r.icon; const active = i === sel;
@@ -99,7 +101,7 @@ export default function Login() {
                         <p style={{ fontSize: '14px', fontWeight: 600, color: active ? '#fff' : 'rgba(255,255,255,0.7)' }}>{r.label}</p>
                         {active && <span className="badge-info" style={{ fontSize: '9px' }}>{r.tag}</span>}
                       </div>
-                      <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>{r.desc}</p>
+                      <p style={{ fontSize: '12px', color: dark ? 'rgba(255,255,255,0.4)' : '#6b7280', marginTop: '2px' }}>{r.desc}</p>
                     </div>
                     <ChevronRight size={15} color={active ? '#a78bfa' : 'rgba(255,255,255,0.2)'} />
                   </button>
@@ -111,28 +113,28 @@ export default function Login() {
               {[{ icon: '🔐', v: 'AES-256', l: 'Encrypted' }, { icon: '👁️', v: '99.8%', l: 'Face Accuracy' }, { icon: '⚡', v: '< 2s', l: 'Verification' }].map(t => (
                 <div key={t.l} className="glass-card" style={{ padding: '12px', textAlign: 'center', cursor: 'default' }}>
                   <div style={{ fontSize: '20px', marginBottom: '4px' }}>{t.icon}</div>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>{t.v}</div>
-                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '1px' }}>{t.l}</div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: dark ? '#fff' : '#1e1b4b' }}>{t.v}</div>
+                  <div style={{ fontSize: '10px', color: dark ? 'rgba(255,255,255,0.4)' : '#6b7280', marginTop: '1px' }}>{t.l}</div>
                 </div>
               ))}
             </div>
 
-            <div style={{ marginTop: '14px', padding: '12px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px' }}>
-              <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Demo Credentials</p>
+            <div style={{ marginTop: '14px', padding: '12px 16px', background: dark ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.15)', border: dark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(255,255,255,0.3)', borderRadius: '12px' }}>
+              <p style={{ fontSize: '10px', color: dark ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.8)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Demo Credentials</p>
               {ROLES.map(r => (
                 <div key={r.role} style={{ display: 'flex', gap: '8px', fontSize: '11px', marginBottom: '5px' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.5)', minWidth: '90px' }}>{r.label}:</span>
-                  <code style={{ color: 'rgba(255,255,255,0.35)' }}>{r.email} / {r.pw}</code>
+                  <span style={{ color: dark ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.9)', minWidth: '90px' }}>{r.label}:</span>
+                  <code style={{ color: dark ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.85)' }}>{r.email} / {r.pw}</code>
                 </div>
               ))}
               <div style={{ display: 'flex', gap: '8px', fontSize: '11px', marginBottom: '5px', marginTop: '8px' }}>
-                <span style={{ color: 'rgba(255,255,255,0.5)', minWidth: '90px' }}>Custom Invig:</span>
-                <span style={{ color: 'rgba(255,255,255,0.35)' }}>Check Admin Panel -&gt; Invigilators</span>
+                <span style={{ color: dark ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.9)', minWidth: '90px' }}>Custom Invig:</span>
+                <span style={{ color: dark ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.85)' }}>Check Admin Panel -&gt; Invigilators</span>
               </div>
             </div>
           </div>
 
-          <div className="glass-card" style={{ padding: '32px', position: 'relative', overflow: 'hidden', boxShadow: `0 0 40px ${card.border.replace('0.35', '0.12')}` }}>
+          <div className="glass-card" style={{ padding: '32px', position: 'relative', overflow: 'hidden', background: dark ? undefined : '#ffffff', boxShadow: `0 0 40px ${card.border.replace('0.35', '0.12')}` }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(${card.gradient})`, borderRadius: '16px 16px 0 0' }} />
             <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px', background: `linear-gradient(${card.gradient})`, borderRadius: '50%', filter: 'blur(60px)', opacity: 0.12 }} />
 
@@ -141,10 +143,10 @@ export default function Login() {
                 <Icon size={18} color="#fff" />
               </div>
               <div>
-                <h2 style={{ fontFamily: 'Sora,sans-serif', fontSize: '18px', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>
+                <h2 style={{ fontFamily: 'Sora,sans-serif', fontSize: '18px', fontWeight: 700, color: dark ? '#fff' : '#1e1b4b', letterSpacing: '-0.02em' }}>
                   Sign in as {card.label}
                 </h2>
-                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
+                <p style={{ fontSize: '12px', color: dark ? 'rgba(255,255,255,0.4)' : '#6b7280', marginTop: '2px' }}>
                   Access the SEAS platform
                 </p>
               </div>
@@ -189,14 +191,14 @@ export default function Login() {
 
             <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="live-dot" /><span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', marginLeft: '4px' }}>System Online</span>
+                <span className="live-dot" /><span style={{ fontSize: '12px', color: dark ? 'rgba(255,255,255,0.35)' : '#6b7280', marginLeft: '4px' }}>System Online</span>
               </div>
-              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.2)' }}>SEAS v2.0 · Secured</span>
+              <span style={{ fontSize: '11px', color: dark ? 'rgba(255,255,255,0.2)' : '#9ca3af' }}>SEAS v2.0 · Secured</span>
             </div>
           </div>
         </div>
 
-        <p style={{ textAlign: 'center', marginTop: '36px', fontSize: '12px', color: 'rgba(255,255,255,0.2)' }}>
+        <p style={{ textAlign: 'center', marginTop: '36px', fontSize: '12px', color: dark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)' }}>
           © 2026 Smart Examination Automated System · All rights reserved
         </p>
       </div>

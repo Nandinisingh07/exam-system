@@ -1020,9 +1020,9 @@ body {
 [data-theme="light"] [class*="text-3xl"],
 [data-theme="light"] [class*="text-xl"] { color: #1e1b4b !important; -webkit-text-fill-color: #1e1b4b !important; }
 
-[data-theme="light"] p,
-[data-theme="light"] span:not([class*="badge"]):not([class*="live-dot"]):not([class*="text-emerald"]):not([class*="text-rose"]):not([class*="text-amber"]) {
-  color: #374151 !important;
+[data-theme="light"] main p,
+[data-theme="light"] main span:not([class*="badge"]):not([class*="live-dot"]):not([class*="text-emerald"]):not([class*="text-rose"]):not([class*="text-amber"]) {
+  color: #374151;
 }
 
 [data-theme="light"] .text-slate-400,

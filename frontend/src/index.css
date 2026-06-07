@@ -464,3 +464,48 @@ body {
   --input-border: rgba(26,36,96,0.15);
   --hover-bg:     rgba(26,36,96,0.05);
 }
+
+/* ── Light mode: force all white text to dark ─────────────────── */
+[data-theme="light"] .text-white,
+[data-theme="light"] .text-white\/70,
+[data-theme="light"] .text-white\/60,
+[data-theme="light"] .text-white\/50,
+[data-theme="light"] .text-white\/40,
+[data-theme="light"] .text-white\/30 { color: #1e293b !important; }
+
+[data-theme="light"] .text-slate-300,
+[data-theme="light"] .text-slate-400,
+[data-theme="light"] .text-slate-500 { color: #475569 !important; }
+
+[data-theme="light"] .border-white\/\[0\.08\],
+[data-theme="light"] .border-white\/\[0\.06\],
+[data-theme="light"] .border-white\/\[0\.04\] { border-color: #e2e8f0 !important; }
+
+[data-theme="light"] .bg-white\/\[0\.08\],
+[data-theme="light"] .bg-white\/\[0\.06\],
+[data-theme="light"] .bg-white\/\[0\.04\],
+[data-theme="light"] .bg-white\/\[0\.03\] { background-color: rgba(255,255,255,0.85) !important; }
+
+[data-theme="light"] .bg-slate-800,
+[data-theme="light"] .bg-slate-900,
+[data-theme="light"] .bg-slate-950 { background-color: #ffffff !important; }
+
+[data-theme="light"] .bg-slate-700 { background-color: #f1f5f9 !important; }
+
+[data-theme="light"] .text-slate-800 { color: #1e293b !important; }
+
+[data-theme="light"] [style*="color: rgba(255,255,255"],
+[data-theme="light"] [style*="color:#fff"],
+[data-theme="light"] [style*="color: #fff"] { color: #1e293b !important; }
+
+[data-theme="light"] [style*="background: rgba(255,255,255,0.0"],
+[data-theme="light"] [style*="background-color: rgba(255,255,255,0.0"],
+[data-theme="light"] [style*="background:'rgba(255,255,255,0.0"] { background-color: rgba(255,255,255,0.90) !important; }
+
+[data-theme="light"] [style*="background: rgba(8,8"],
+[data-theme="light"] [style*="background-color: rgba(8,8"],
+[data-theme="light"] [style*="background:#0a0a"],
+[data-theme="light"] [style*="background: #0a0a"],
+[data-theme="light"] [style*="background:'rgba(12,12"] { background-color: #ffffff !important; }
+
+[data-theme="light"] .via-\[#0a0a0f\] { --tw-gradient-via: #e8eeff !important; }

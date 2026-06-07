@@ -1,20 +1,17 @@
-﻿import React, { createContext, useContext, useState } from "react";
-
-const ThemeContext = createContext();
-
+import React, { createContext, useContext, useEffect, useState } from 'react';
+const ThemeContext = createContext({ theme: 'dark', dark: true, toggle: () => {} });
 export function ThemeProvider({ children }) {
-  const [dark, setDark] = useState(() => localStorage.getItem("seas-theme") !== "light");
-  const toggle = () => setDark(d => {
-    localStorage.setItem("seas-theme", d ? "light" : "dark");
-    return !d;
-  });
+  const [theme, setTheme] = useState(() => localStorage.getItem('seas-theme') || 'dark');
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.body.setAttribute('data-theme', theme);
+    localStorage.setItem('seas-theme', theme);
+  }, [theme]);
+  const toggle = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
   return (
-    <ThemeContext.Provider value={{ dark, toggle }}>
-      <div data-theme={dark ? "dark" : "light"} style={{ minHeight: "100vh" }}>
-        {children}
-      </div>
+    <ThemeContext.Provider value={{ theme, dark: theme === 'dark', toggle }}>
+      {children}
     </ThemeContext.Provider>
   );
 }
-
 export const useTheme = () => useContext(ThemeContext);

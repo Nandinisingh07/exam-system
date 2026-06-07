@@ -1,5 +1,6 @@
 import AttendanceLogs from './pages/invigilator/AttendanceLogs';
 import React from 'react';
+import { ThemeProvider } from './context/ThemeContext';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Layout from './components/Layout';
@@ -33,6 +34,7 @@ const SmartRedirect = () => {
 
 function App() {
   return (
+    <ThemeProvider>
     <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -63,6 +65,7 @@ function App() {
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
+    </ThemeProvider>
   );
 }
 

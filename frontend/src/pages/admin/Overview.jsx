@@ -123,7 +123,7 @@ export default function Overview() {
   return (
     <div className="space-y-6 animate-fade-slide">
       {/* â”€â”€ Hero header â”€â”€ */}
-      <div className="relative rounded-2xl overflow-hidden p-7 bg-gradient-to-br from-indigo-500/15 via-[#0a0a0f] to-transparent border border-white/[0.08]">
+      <div className="relative rounded-2xl overflow-hidden p-7 bg-gradient-to-br from-indigo-500/15 via-[#0a0a0f] to-transparent border border-white/[0.08]" data-hero="overview">
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
         <div className="relative flex items-center justify-between flex-wrap gap-4">
           <div>

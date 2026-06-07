@@ -358,7 +358,7 @@ const ExamDutyManagement = () => {
                     <div style={{ padding: '10px 12px', borderRadius: '10px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', marginBottom: '16px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                       <AlertCircle size={13} style={{ color: '#818cf8', flexShrink: 0, marginTop: '1px' }} />
                       <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
-                        Uploaded documents (PDF, Image, DOC, Excel) will be <strong style={{ color: '#a5b4fc' }}>visible to ALL registered invigilators</strong> on their dashboards.
+                        Uploaded documents (PDF, Image, DOC, Excel) will be <strong className='duty-info-highlight'>visible to ALL registered invigilators</strong> on their dashboards.
                       </p>
                     </div>
                     <UploadPanel onUpload={handleUploadDone} />

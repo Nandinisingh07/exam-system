@@ -1059,3 +1059,32 @@ body {
 [data-theme="light"] .bg-gradient-to-br.from-indigo-500\/15 p {
   color: #6b7280 !important;
 }
+
+/* ?? Overview hero: light mode ??????????????????????????????? */
+[data-theme="light"] [data-hero="overview"] {
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 60%, #c7d2fe 100%) !important;
+  border-color: rgba(99,102,241,0.25) !important;
+}
+[data-theme="light"] [data-hero="overview"] h1 {
+  color: #1e1b4b !important;
+  -webkit-text-fill-color: #1e1b4b !important;
+}
+[data-theme="light"] [data-hero="overview"] h1 .text-gradient {
+  background: linear-gradient(135deg, #4338ca, #6366f1) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+[data-theme="light"] [data-hero="overview"] span,
+[data-theme="light"] [data-hero="overview"] p { color: #4338ca !important; }
+[data-theme="light"] [data-hero="overview"] .text-slate-500 { color: #6b7280 !important; }
+[data-theme="light"] [data-hero="overview"] .absolute { background: rgba(99,102,241,0.06) !important; }
+
+/* ?? ExamDuty info bar text ??????????????????????????????????? */
+.duty-info-highlight { color: #a5b4fc; }
+[data-theme="light"] .duty-info-highlight { color: #4338ca !important; }
+[data-theme="light"] .p-2\.5.rounded-lg.bg-indigo-500\/10 {
+  background: rgba(99,102,241,0.08) !important;
+  border-color: rgba(99,102,241,0.20) !important;
+}
+[data-theme="light"] .p-2\.5.rounded-lg.bg-indigo-500\/10,
+[data-theme="light"] .p-2\.5.rounded-lg.bg-indigo-500\/10 * { color: #3730a3 !important; }

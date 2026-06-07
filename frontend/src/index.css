@@ -4,9 +4,9 @@
 @theme {
   --font-sans: 'Inter', 'Plus Jakarta Sans', sans-serif;
   --font-display: 'Sora', 'Plus Jakarta Sans', sans-serif;
-  --color-bg-base:    #e8f0fe;
-  --color-bg-mid:     #eff6ff;
-  --color-bg-surface: #f8faff;
+  --color-bg-base:    #080c12;
+  --color-bg-mid:     #0c1118;
+  --color-bg-surface: #101620;
   --color-cyan-300: #67e8f9;
   --color-cyan-400: #22d3ee;
   --color-cyan-500: #06b6d4;
@@ -27,19 +27,19 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background: linear-gradient(160deg, #f0f4ff 0%, #e8f0fe 50%, #eff6ff 100%); background-attachment: fixed;
-  color: #1e293b;
+  background-color: #0f1623;
+  color: rgba(255,255,255,0.87);
   font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-::selection { background: rgba(59,130,246,0.20); color: #1e3a8a; }
+::selection { background: rgba(6,182,212,0.35); color: #fff; }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.30); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(59,130,246,0.55); }
+::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.2); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(6,182,212,0.4); }
 
 /* -- Design Tokens ------------------------------------------------- */
 :root {
@@ -51,11 +51,11 @@ body {
   --rose:          #f43f5e;
   --emerald:       #10b981;
   --amber:         #f59e0b;
-  --card-bg:       rgba(255,255,255,0.80);
-  --card-border:   rgba(59,130,246,0.20);
-  --divider:       rgba(59,130,246,0.10);
-  --text-muted:    rgba(30,41,59,0.55);
-  --text-body:     rgba(30,41,59,0.85);
+  --card-bg:       rgba(255,255,255,0.038);
+  --card-border:   rgba(255,255,255,0.08);
+  --divider:       rgba(255,255,255,0.06);
+  --text-muted:    rgba(255,255,255,0.42);
+  --text-body:     rgba(255,255,255,0.72);
 }
 
 /* -- Glassmorphism -------------------------------------------------- */
@@ -71,12 +71,12 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(59,130,246,0.10), inset 0 1px 0 rgba(255,255,255,0.90);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05);
   transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
 }
 .glass-card:hover {
-  border-color: rgba(59,130,246,0.40);
-  box-shadow: 0 0 28px rgba(59,130,246,0.15), 0 8px 32px rgba(59,130,246,0.08);
+  border-color: rgba(6,182,212,0.28);
+  box-shadow: 0 0 28px rgba(6,182,212,0.1), 0 8px 32px rgba(0,0,0,0.5);
   transform: translateY(-2px);
 }
 .glass-card-static {
@@ -202,7 +202,7 @@ body {
 .sidebar-link.active {
   color: #67e8f9;
   background: linear-gradient(135deg, rgba(6,182,212,0.16), rgba(14,165,233,0.07));
-  border-color: rgba(59,130,246,0.40);
+  border-color: rgba(6,182,212,0.28);
   border-left: 3px solid #06b6d4;
   box-shadow: 0 0 18px rgba(6,182,212,0.07);
 }
@@ -431,7 +431,6 @@ body {
 .stat-accent-emerald::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#059669,#10b981); }
 .stat-accent-amber::before   { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#d97706,#f59e0b); }
 .stat-accent-rose::before    { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#be123c,#f43f5e); }
-
 
 
 

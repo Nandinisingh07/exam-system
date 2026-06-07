@@ -38,13 +38,13 @@ def get_overview(db: Session = Depends(get_db), _: User = Depends(require_admin)
         day_start = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
         day_end = day_start + timedelta(days=1)
         present = db.query(func.count(AttendanceRecord.id)).filter(
-            AttendanceRecord.timestamp >= day_start,
-            AttendanceRecord.timestamp < day_end,
+            AttendanceRecord.marked_at >= day_start,
+            AttendanceRecord.marked_at < day_end,
             AttendanceRecord.status == "Present"
         ).scalar() or 0
         absent = db.query(func.count(AttendanceRecord.id)).filter(
-            AttendanceRecord.timestamp >= day_start,
-            AttendanceRecord.timestamp < day_end,
+            AttendanceRecord.marked_at >= day_start,
+            AttendanceRecord.marked_at < day_end,
             AttendanceRecord.status == "Absent"
         ).scalar() or 0
         attendance_data.append({
@@ -59,11 +59,8 @@ def get_overview(db: Session = Depends(get_db), _: User = Depends(require_admin)
     for room in classrooms:
         duty = db.query(DutyAssignment).filter(DutyAssignment.classroom_id == room.id).first()
         seated = db.query(func.count(SeatAllocation.id)).filter(SeatAllocation.classroom_id == room.id).scalar() or 0
-        washroom_alerts = db.query(func.count(WashroomLog.id)).filter(
-            WashroomLog.classroom_id == room.id,
-            WashroomLog.entry_time == None
-        ).scalar() or 0
-        invigilator_name = duty.teacher.full_name if duty and duty.teacher else "Unassigned"
+        washroom_alerts = 0
+        invigilator_name = duty.teacher.name if duty and duty.teacher else "Unassigned"
         exam_code = duty.exam.subject_code if duty and duty.exam else "-"
         rooms.append({
             "room": room.room_number,
@@ -90,7 +87,7 @@ def get_overview(db: Session = Depends(get_db), _: User = Depends(require_admin)
     for w in w_logs:
         feed.append({
             "msg": f"Washroom alert: {w.student.name if w.student else 'Unknown'}",
-            "room": w.classroom.room_number if w.classroom else "N/A",
+            "room": "N/A",
             "time": "Active",
             "s": "warning"
         })
@@ -106,7 +103,7 @@ def get_overview(db: Session = Depends(get_db), _: User = Depends(require_admin)
     pending_count = max(0, total_alloc - verified_count)
     absent_count = db.query(func.count(AttendanceRecord.id)).filter(
         AttendanceRecord.status == "Absent",
-        AttendanceRecord.timestamp >= today_start
+        AttendanceRecord.marked_at >= today_start
     ).scalar() or 0
 
     pie = [

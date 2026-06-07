@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import {
   Users, Calendar, UserCheck, AlertTriangle, TrendingUp, TrendingDown,
   ArrowUpRight, CheckCircle, Clock, Download, RefreshCw, Eye, MapPin,
@@ -8,7 +8,7 @@ import {
 import { adminApi } from '../../services/api';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-/* ── Animated counter ─────────────────────────────────────────── */
+/* â”€â”€ Animated counter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function useCountUp(target, duration = 1800) {
   const [val, setVal] = useState(0);
   const started = useRef(false);
@@ -40,10 +40,10 @@ function StatCard({ title, raw, display, sub, icon: Icon, accent, trend, tv }) {
   const counted = useCountUp(raw);
   const formatted = display.includes(',') ? counted.toLocaleString() : String(counted);
   return (
-    <div className={`glass-card p-5 border border-white/[0.08] hover:shadow-xl transition-all duration-300 group relative overflow-hidden`}>
+    <div className={`glass-card p-5 border border-slate-200 hover:shadow-xl transition-all duration-300 group relative overflow-hidden`}>
       <div className="absolute top-0 right-0 w-24 h-24 bg-white/[0.02] rounded-full -translate-y-8 translate-x-8" />
       <div className="flex items-center justify-between mb-4">
-        <div className={`p-2 rounded-xl bg-white/[0.03] border border-white/[0.08]`}>
+        <div className={`p-2 rounded-xl bg-white/[0.03] border border-slate-200`}>
           <Icon size={18} className="text-white/70" />
         </div>
         <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold ${trend === 'up' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
@@ -51,7 +51,7 @@ function StatCard({ title, raw, display, sub, icon: Icon, accent, trend, tv }) {
         </div>
       </div>
       <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">{title}</p>
-      <p className="text-3xl font-black text-white" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>{formatted}</p>
+      <p className="text-3xl font-black text-slate-800" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>{formatted}</p>
       <p className="text-[10px] text-slate-500 mt-2">{sub}</p>
     </div>
   );
@@ -122,8 +122,8 @@ export default function Overview() {
 
   return (
     <div className="space-y-6 animate-fade-slide">
-      {/* ── Hero header ── */}
-      <div className="relative rounded-2xl overflow-hidden p-7 bg-gradient-to-br from-indigo-500/15 via-[#0a0a0f] to-transparent border border-white/[0.08]">
+      {/* â”€â”€ Hero header â”€â”€ */}
+      <div className="relative rounded-2xl overflow-hidden p-7 bg-white/80 border border-indigo-100 backdrop-blur-sm">
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
         <div className="relative flex items-center justify-between flex-wrap gap-4">
           <div>
@@ -131,11 +131,11 @@ export default function Overview() {
               <Zap size={14} className="text-indigo-400" />
               <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Admin Command Center</span>
             </div>
-            <h1 className="text-3xl font-black text-white tracking-tight" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>
+            <h1 className="text-3xl font-black text-slate-800 tracking-tight" style={{ fontFamily: 'Sora, Inter, sans-serif' }}>
               System <span className="text-gradient">Overview</span>
             </h1>
             <p className="text-xs text-slate-500 mt-1 flex items-center gap-2">
-              <span className="live-dot" /> Live Monitoring Active · {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              <span className="live-dot" /> Live Monitoring Active Â· {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -149,7 +149,7 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* ── Stat cards ── */}
+      {/* â”€â”€ Stat cards â”€â”€ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 stagger">
         {data.stats.map(s => <StatCard key={s.key} {...s} />)}
       </div>
@@ -235,7 +235,7 @@ export default function Overview() {
         {/* Sidebar */}
         <div className="lg:col-span-4 space-y-6">
           <div className="section-card flex flex-col h-full">
-            <div className="p-5 border-b border-white/[0.06] flex items-center justify-between">
+            <div className="p-5 border-b border-slate-200 flex items-center justify-between">
                <h3 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
                  <ShieldAlert size={14} className="text-amber-400" />
                  Live Activity
@@ -246,7 +246,7 @@ export default function Overview() {
               {data.feed.length > 0 ? data.feed.map((a, i) => (
                 <div key={i} className="flex gap-4 group">
                   <div className="flex flex-col items-center">
-                    <div className={`w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.08] flex items-center justify-center flex-shrink-0`}>
+                    <div className={`w-8 h-8 rounded-lg bg-white/[0.03] border border-slate-200 flex items-center justify-center flex-shrink-0`}>
                       {a.s === 'success' ? <CheckCircle size={13} className="text-emerald-400" /> : a.s === 'warning' ? <AlertTriangle size={13} className="text-amber-400" /> : <Info size={13} className="text-indigo-400" />}
                     </div>
                     {i < data.feed.length - 1 && <div className="w-[1px] flex-1 bg-white/[0.05] my-2" />}
@@ -265,7 +265,7 @@ export default function Overview() {
                 </div>
               )}
             </div>
-            <button className="p-4 text-[10px] font-black text-slate-500 hover:text-indigo-400 transition-colors border-t border-white/[0.06] uppercase tracking-widest">
+            <button className="p-4 text-[10px] font-black text-slate-500 hover:text-indigo-400 transition-colors border-t border-slate-200 uppercase tracking-widest">
               View Detailed System Logs
             </button>
           </div>
@@ -282,3 +282,5 @@ function Info({ size, className }) {
     </svg>
   );
 }
+
+

@@ -289,7 +289,7 @@ async def verify_step_admit(
     _sem_match = _re.search(
         r"Sem(?:ester)?[a-zA-Z]*[\s:\-]*\s*(VIII|VII|VI|IV|III|IX|II|I|\d{1,2})",
         raw_text, _re.IGNORECASE
-    ))
+    )
     ocr_sem = _sem_match.group(1).upper().strip() if _sem_match else None
     
     

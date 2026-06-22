@@ -74,7 +74,7 @@ def add_exam(exam_in: ExamCreate, db: Session = Depends(get_db), _: User = Depen
     exam = Exam(
         subject_name=exam_in.subject_name,
         subject_code=exam_in.subject_code,
-        date=datetime.fromisoformat(exam_in.date)
+        date=datetime.fromisoformat(f"{exam_in.date}T{exam_in.time}")
     )
     db.add(exam)
     db.commit()
@@ -151,34 +151,61 @@ def assign_duty(teacher_id: int, classroom_id: int, exam_id: int, db: Session = 
     db.commit()
     db.refresh(duty)
     return duty
+@router.get("/my-duties-all")
+def get_all_my_duties(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    from datetime import datetime, timedelta
+    now = datetime.now()
+    all_duties = db.query(DutyAssignment).filter(DutyAssignment.teacher_id == user.id).all()
+    result = []
+    for d in all_duties:
+        exam_start = d.exam.date
+        exam_end = exam_start + timedelta(minutes=d.exam.duration_minutes or 180)
+        result.append({
+            "duty_id": d.id,
+            "exam_id": d.exam_id,
+            "subject_code": d.exam.subject_code,
+            "subject_name": d.exam.subject_name,
+            "room": (d.classroom.room_number if hasattr(d.classroom, "room_number") else d.classroom.room_no) if d.classroom else "N/A",
+            "floor": d.classroom.floor if hasattr(d.classroom, "floor") and d.classroom else "1",
+            "date": exam_start.strftime("%B %d, %Y"),
+            "time": f"{exam_start.strftime('%I:%M %p')} — {exam_end.strftime('%I:%M %p')}",
+            "student_count": db.query(SeatAllocation).filter(SeatAllocation.exam_id == d.exam_id).count(),
+            "is_active": exam_start <= now <= exam_end,
+            "is_upcoming": exam_start > now,
+        })
+    result.sort(key=lambda x: x["is_active"], reverse=True)
+    return result
+
 @router.get("/my-duty")
 def get_my_duty(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    from datetime import datetime
+    from datetime import datetime, timedelta
     now = datetime.now()
-    today = now.date()
-    current_time = now.time()
 
     all_duties = db.query(DutyAssignment).filter(DutyAssignment.teacher_id == user.id).all()
 
+    # Find currently active duty first
     duty = None
     upcoming = None
     for d in all_duties:
-        exam_date = d.exam.date.date() if hasattr(d.exam.date, "date") else d.exam.date
-        if exam_date != today:
-            continue
-        tt = db.query(Timetable).filter(Timetable.subject == d.exam.subject_name).first()
-        if tt:
-            if tt.start_time <= current_time <= tt.end_time:
-                duty = d
-                duty._tt = tt
-                break
-            elif tt.start_time > current_time:
-                if upcoming is None or tt.start_time < upcoming._tt.start_time:
-                    upcoming = d
-                    upcoming._tt = tt
+        exam_start = d.exam.date
+        exam_end = exam_start + timedelta(minutes=d.exam.duration_minutes or 180)
 
+        if exam_start <= now <= exam_end:
+            duty = d
+            break
+        elif exam_start > now:
+            if upcoming is None or exam_start < upcoming.exam.date:
+                upcoming = d
+
+    # If no active duty, show nearest upcoming
     if duty is None:
         duty = upcoming
+
+    # If nothing upcoming either, show most recent past duty
+    if duty is None:
+        past = [d for d in all_duties if d.exam.date < now]
+        if past:
+            duty = max(past, key=lambda d: d.exam.date)
 
     if not duty:
         raise HTTPException(status_code=404, detail="No active duty assigned to you at this time.")
@@ -222,7 +249,7 @@ def get_my_duty(db: Session = Depends(get_db), user: User = Depends(get_current_
         "exam": duty.exam.subject_name,
         "code": duty.exam.subject_code,
         "date": duty.exam.date.strftime("%B %d, %Y"),
-        "time": (f"{duty._tt.start_time.strftime('%I:%M %p')} — {duty._tt.end_time.strftime('%I:%M %p')}" if hasattr(duty, "_tt") and duty._tt else "Time N/A"),
+        "time": f"{duty.exam.date.strftime('%I:%M %p')} — {(duty.exam.date + __import__('datetime').timedelta(minutes=duty.exam.duration_minutes or 180)).strftime('%I:%M %p')}",
         "room": duty.classroom.room_number,
         "floor": f"Floor {duty.classroom.floor}",
         "totalStudents": len(allocations),

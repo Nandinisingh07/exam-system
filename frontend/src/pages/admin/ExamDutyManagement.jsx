@@ -244,6 +244,8 @@ const ExamDutyManagement = () => {
 
   useEffect(() => {
     refreshAll();
+    const interval = setInterval(refreshAll, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleAddExam = async (e) => {

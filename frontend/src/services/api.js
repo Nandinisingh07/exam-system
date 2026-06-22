@@ -46,6 +46,7 @@ export const logisticsApi = {
   getAllocations:       (examId) => api.get(`/api/logistics/allocations/${examId}`),
   generateAllocations: (examId) => api.post(`/api/logistics/allocations/generate/${examId}`),
   getMyDuty:           () => api.get('/api/logistics/my-duty'),
+  getMyDutiesAll:      () => api.get('/api/logistics/my-duties-all'),
   getDuties:           () => api.get('/api/logistics/duties'),
   assignDuty:          (teacher_id, classroom_id, exam_id) => 
     api.post(`/api/logistics/duties?teacher_id=${teacher_id}&classroom_id=${classroom_id}&exam_id=${exam_id}`),
@@ -102,7 +103,8 @@ export const studentApi = {
 export const timetableApi = {
   getToday:   () => api.get('/api/logistics/exams'),
   all:        () => api.get('/api/logistics/exams'),
-  myDuties:   () => api.get('/api/logistics/my-duty'),
+  myDuties:      () => api.get('/api/logistics/my-duty'),
+  myDutiesAll:   () => api.get('/api/logistics/my-duties-all'),
 };
 
 export const verificationApi = {

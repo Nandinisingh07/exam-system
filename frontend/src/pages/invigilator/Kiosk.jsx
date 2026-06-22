@@ -514,22 +514,27 @@ export default function Kiosk() {
   }, [facingMode]);
 
   const [myDuty, setMyDuty] = useState(null);
+  const [allDuties, setAllDuties] = useState([]);
 
-  // Load duty first, then exams + students
-  useEffect(() => {
-    apiGet('/api/logistics/my-duty')
-      .then(duty => {
-        setMyDuty(duty);
-        apiGet('/api/logistics/exams').then(exams => {
-          setExams(exams);
-          const match = exams.find(e => e.subject_code === duty.code || e.subject_name === duty.exam);
-          if (match) setExamId(String(match.id));
-        }).catch(console.error);
+  function loadDuties() {
+    apiGet('/api/logistics/my-duties-all')
+      .then(duties => {
+        setAllDuties(duties);
+        if (duties.length === 1) {
+          setMyDuty(duties[0]);
+          setExamId(String(duties[0].exam_id));
+        } else if (duties.length > 1) {
+          setMyDuty(null);
+        }
       })
-      .catch(() => {
-        apiGet('/api/logistics/exams').then(setExams).catch(console.error);
-      });
+      .catch(() => setAllDuties([]));
     apiGet('/api/students').then(setStudents).catch(() => setStudents([]));
+  }
+
+  useEffect(() => {
+    loadDuties();
+    const interval = setInterval(loadDuties, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   function flipCamera() {
@@ -823,27 +828,42 @@ export default function Kiosk() {
 
           {/* Duty Info */}
           <div className="bg-slate-900 border border-slate-700 rounded-2xl p-4">
-            {myDuty ? (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-xs text-emerald-400 font-semibold uppercase tracking-wider">Duty Assigned</span>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><div className="text-slate-400 text-xs mb-0.5">Exam</div><div className="text-white font-semibold text-sm">{myDuty.code}</div><div className="text-slate-300 text-xs">{myDuty.exam}</div></div>
-                  <div><div className="text-slate-400 text-xs mb-0.5">Room</div><div className="text-white font-semibold text-sm">{myDuty.room}</div><div className="text-slate-300 text-xs">{myDuty.floor}</div></div>
-                  <div><div className="text-slate-400 text-xs mb-0.5">Date</div><div className="text-slate-200 text-xs">{myDuty.date}</div></div>
-                  <div><div className="text-slate-400 text-xs mb-0.5">Students</div><div className="text-slate-200 text-xs">{myDuty.totalStudents} assigned</div></div>
-                </div>
+            {allDuties.length === 0 ? (
+              <p className="text-amber-400 text-xs mt-2">No duty assigned. Contact admin.</p>
+            ) : allDuties.length === 1 ? (
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <div><div className="text-slate-400 text-xs mb-0.5">Exam</div><div className="text-white text-sm font-semibold">{allDuties[0].subject_code} — {allDuties[0].subject_name}</div></div>
+                <div><div className="text-slate-400 text-xs mb-0.5">Room</div><div className="text-white text-sm font-semibold">{allDuties[0].room}</div></div>
+                <div><div className="text-slate-400 text-xs mb-0.5">Date</div><div className="text-slate-300 text-xs">{allDuties[0].date}</div></div>
+                <div><div className="text-slate-400 text-xs mb-0.5">Students</div><div className="text-slate-300 text-xs">{allDuties[0].student_count}</div></div>
+                <div className="col-span-2"><div className="text-slate-400 text-xs mb-0.5">Time</div><div className="text-slate-300 text-xs">{allDuties[0].time}</div></div>
               </div>
             ) : (
-              <div>
-                <label className="text-xs text-slate-400 mb-2 block font-medium uppercase tracking-wider">Select Exam</label>
-                <select value={examId} onChange={e => { setExamId(e.target.value); resetKiosk(); }} disabled={loading} className="w-full bg-slate-800 border border-slate-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500">
-                  <option value="">— Choose exam —</option>
-                  {exams.map(e => (<option key={e.id} value={e.id}>{e.subject_code} — {e.subject_name}</option>))}
+              <div className="mt-3">
+                <p className="text-slate-400 text-xs mb-2">You have {allDuties.length} duties. Select exam:</p>
+                <select
+                  className="w-full bg-slate-800 border border-slate-600 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500"
+                  value={examId}
+                  onChange={e => {
+                    const sel = allDuties.find(d => String(d.exam_id) === e.target.value);
+                    setExamId(e.target.value);
+                    setMyDuty(sel || null);
+                  }}
+                >
+                  <option value="">Select an exam</option>
+                  {allDuties.map(d => (
+                    <option key={d.duty_id} value={String(d.exam_id)}>
+                      {d.subject_code} — {d.subject_name} | {d.room} | {d.date}
+                    </option>
+                  ))}
                 </select>
-                <p className="text-amber-400 text-xs mt-2">No duty assigned. Contact admin.</p>
+                {myDuty && (
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <div><div className="text-slate-400 text-xs mb-0.5">Room</div><div className="text-white text-sm font-semibold">{myDuty.room}</div></div>
+                    <div><div className="text-slate-400 text-xs mb-0.5">Students</div><div className="text-slate-300 text-xs">{myDuty.student_count}</div></div>
+                    <div className="col-span-2"><div className="text-slate-400 text-xs mb-0.5">Time</div><div className="text-slate-300 text-xs">{myDuty.time}</div></div>
+                  </div>
+                )}
               </div>
             )}
           </div>

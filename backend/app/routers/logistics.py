@@ -4,6 +4,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 from ..database import get_db
 from ..models.logistics import Classroom, Exam, SeatAllocation, DutyAssignment, DutyDocument
+from ..models.timetable import Timetable
 from ..utils.auth import get_current_user, require_admin
 from ..models.user import User
 
@@ -152,8 +153,33 @@ def assign_duty(teacher_id: int, classroom_id: int, exam_id: int, db: Session = 
     return duty
 @router.get("/my-duty")
 def get_my_duty(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    duty = db.query(DutyAssignment).filter(DutyAssignment.teacher_id == user.id).first()
-    
+    from datetime import datetime
+    now = datetime.now()
+    today = now.date()
+    current_time = now.time()
+
+    all_duties = db.query(DutyAssignment).filter(DutyAssignment.teacher_id == user.id).all()
+
+    duty = None
+    upcoming = None
+    for d in all_duties:
+        exam_date = d.exam.date.date() if hasattr(d.exam.date, "date") else d.exam.date
+        if exam_date != today:
+            continue
+        tt = db.query(Timetable).filter(Timetable.subject == d.exam.subject_name).first()
+        if tt:
+            if tt.start_time <= current_time <= tt.end_time:
+                duty = d
+                duty._tt = tt
+                break
+            elif tt.start_time > current_time:
+                if upcoming is None or tt.start_time < upcoming._tt.start_time:
+                    upcoming = d
+                    upcoming._tt = tt
+
+    if duty is None:
+        duty = upcoming
+
     if not duty:
         raise HTTPException(status_code=404, detail="No active duty assigned to you at this time.")
     
@@ -196,7 +222,7 @@ def get_my_duty(db: Session = Depends(get_db), user: User = Depends(get_current_
         "exam": duty.exam.subject_name,
         "code": duty.exam.subject_code,
         "date": duty.exam.date.strftime("%B %d, %Y"),
-        "time": "09:00 AM – 12:00 PM", # Static for now
+        "time": (f"{duty._tt.start_time.strftime('%I:%M %p')} — {duty._tt.end_time.strftime('%I:%M %p')}" if hasattr(duty, "_tt") and duty._tt else "Time N/A"),
         "room": duty.classroom.room_number,
         "floor": f"Floor {duty.classroom.floor}",
         "totalStudents": len(allocations),

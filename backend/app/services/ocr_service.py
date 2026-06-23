@@ -105,6 +105,34 @@ def extract_raw_text(image_bytes: bytes) -> str:
 
 
 
+
+FIELD_PATTERNS = {
+    "enrollment": [
+        r"(?:enrollment|enroll|roll)[\s\w]*?[:\-#]?\s*([0-9]{6,12})",
+        r"([0-9]{10,12})",
+    ],
+    "name": [
+        r"(?:student|name|candidate)[\s]*[:\-]?\s*([A-Za-z\s]{3,40})",
+    ],
+    "subject": [
+        r"(?:subject|paper|course)[\s]*[:\-]?\s*([A-Za-z0-9\s\-]{3,50})",
+    ],
+    "subject_code": [
+        r"(?:subject\s*code|code)[\s]*[:\-]?\s*([A-Z]{2,4}[\-\s]?[0-9]{2,4})",
+        r"\b([A-Z]{2,4}[\-][0-9]{2,4})\b",
+    ],
+    "exam_date": [
+        r"(?:date|exam\s*date)[\s]*[:\-]?\s*(\d{1,2}[\-/]\d{1,2}[\-/]\d{2,4})",
+        r"(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{4})",
+    ],
+    "semester": [
+        r"(?:sem|semester)[\s]*[:\-]?\s*([IVXivx\d]{1,4})",
+    ],
+    "branch": [
+        r"(?:branch|dept|department|stream)[\s]*[:\-]?\s*([A-Za-z\s&]{2,40})",
+    ],
+}
+
 def extract_fields(text: str) -> dict:
     """Extract structured fields from raw OCR text using regex patterns."""
     fields = {}

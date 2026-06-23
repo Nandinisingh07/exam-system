@@ -208,11 +208,21 @@ def delete_user(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
+    from app.models.logistics import DutyAssignment
+
     u = db.query(User).filter(User.id == user_id).first()
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
     if u.email == admin.email:
         raise HTTPException(status_code=400, detail="Cannot delete currently logged-in administrator")
+
+    duty_count = db.query(DutyAssignment).filter(DutyAssignment.teacher_id == user_id).count()
+    if duty_count > 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot delete {u.name} ({u.email}) - they have {duty_count} duty assignment(s). Reassign or remove those duties first."
+        )
+
     db.delete(u)
     db.commit()
     return {"message": "User deleted successfully"}

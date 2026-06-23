@@ -127,8 +127,12 @@ def get_allocations(exam_id: int, db: Session = Depends(get_db)):
 @router.get("/duties")
 def get_all_duties(db: Session = Depends(get_db), _: User = Depends(require_admin)):
     duties = db.query(DutyAssignment).all()
-    return [
-        {
+    result = []
+    for d in duties:
+        if not d.teacher or not d.classroom or not d.exam:
+            print(f"[get_all_duties] WARNING: skipping orphaned duty_id={d.id} (teacher_id={d.teacher_id}, classroom_id={d.classroom_id}, exam_id={d.exam_id}) - this indicates a data integrity issue, investigate and clean up")
+            continue
+        result.append({
             "id": d.id,
             "teacher": d.teacher.name,
             "name": d.teacher.name,
@@ -140,9 +144,8 @@ def get_all_duties(db: Session = Depends(get_db), _: User = Depends(require_admi
             "time": d.exam.date.strftime("%H:%M") if hasattr(d.exam.date, "strftime") else "09:00",
             "status": "Confirmed",
             "type": "manual"
-        }
-        for d in duties
-    ]
+        })
+    return result
 
 @router.post("/duties")
 def assign_duty(teacher_id: int, classroom_id: int, exam_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):

@@ -850,7 +850,7 @@ export default function Kiosk() {
                     setMyDuty(sel || null);
                   }}
                 >
-                  <option value="">Select an exam</option>
+                  <option value="">Choose exam</option>
                   {allDuties.map(d => (
                     <option key={d.duty_id} value={String(d.exam_id)}>
                       {d.subject_code} — {d.subject_name} | {d.room} | {d.date}

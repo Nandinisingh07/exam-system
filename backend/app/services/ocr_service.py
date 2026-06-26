@@ -3,6 +3,8 @@ Enhanced OCR Service — Field-level extraction with confidence scoring.
 Handles rotated, blurry, and low-brightness admit cards / ID cards.
 """
 import re
+import requests
+import base64
 import io
 import cv2
 import numpy as np
@@ -16,6 +18,8 @@ pytesseract.pytesseract.tesseract_cmd = settings.TESSERACT_CMD
 # ---------------------------------------------------------------------------
 # Preprocessing Pipeline
 # ---------------------------------------------------------------------------
+
+OCR_SPACE_API_KEY = "K87721459388957"
 
 def _deskew(image: np.ndarray) -> np.ndarray:
     """Correct slight rotations up to ±15° using moments."""
@@ -68,6 +72,56 @@ def preprocess_for_ocr(image_bytes: bytes) -> list:
     _, b4 = cv2.imencode(".png", gray)
     results.append((b4.tobytes(), "gray_raw"))
     return results
+
+
+def extract_raw_text_cloud(image_bytes: bytes) -> str:
+
+    try:
+
+        import base64, requests
+
+        b64 = base64.b64encode(image_bytes).decode()
+
+        payload = {
+
+            "apikey": OCR_SPACE_API_KEY,
+
+            "base64Image": "data:image/png;base64," + b64,
+
+            "language": "eng",
+
+            "isOverlayRequired": False,
+
+            "detectOrientation": True,
+
+            "scale": True,
+
+            "OCREngine": 2,
+
+        }
+
+        r = requests.post("https://api.ocr.space/parse/image", data=payload, timeout=15)
+
+        result = r.json()
+
+        if result.get("IsErroredOnProcessing"):
+
+            print("[OCR] OCR.space error: " + str(result.get("ErrorMessage")))
+
+            return ""
+
+        text = " ".join(p["ParsedText"] for p in result.get("ParsedResults", []))
+
+        print(f"[OCR] OCR.space: {len(text)} chars, preview={repr(text[:80])}")
+
+        return text.strip()
+
+    except Exception as e:
+
+        print(f"[OCR] OCR.space failed: {e}")
+
+        return ""
+
 def extract_raw_text(image_bytes: bytes) -> str:
     WL = "-c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/.-: "
     configs = ["--oem 3 --psm 6 " + WL, "--oem 3 --psm 4 " + WL, "--oem 3 --psm 11 " + WL]
@@ -251,7 +305,13 @@ def extract_admit_card_fields(image_bytes: bytes) -> tuple[dict, str]:
     Main entry point for admit card OCR.
     Returns (fields_dict, raw_text).
     """
-    raw = extract_raw_text(image_bytes)
+    raw = extract_raw_text_cloud(image_bytes)
+
+    if not raw.strip():
+
+        print('[OCR] Cloud OCR empty, falling back to Tesseract')
+
+        raw = extract_raw_text(image_bytes)
     fields = extract_fields(raw)
     return fields, raw
 
@@ -260,7 +320,13 @@ def extract_id_card_fields(image_bytes: bytes) -> tuple[dict, str]:
     """
     Entry point for ID card OCR — same pipeline.
     """
-    raw = extract_raw_text(image_bytes)
+    raw = extract_raw_text_cloud(image_bytes)
+
+    if not raw.strip():
+
+        print('[OCR] Cloud OCR empty, falling back to Tesseract')
+
+        raw = extract_raw_text(image_bytes)
     fields = extract_fields(raw)
     return fields, raw
 

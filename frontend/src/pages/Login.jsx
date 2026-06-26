@@ -59,8 +59,8 @@ export default function Login() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: dark 
-        ? '#080c14' 
+      background: dark
+        ? '#080c14'
         : '#d2e5f7',
       display: 'flex',
       alignItems: 'center',
@@ -77,21 +77,21 @@ export default function Login() {
         left: '-5%',
         width: '50vw',
         height: '50vw',
-        background: dark 
+        background: dark
           ? 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 60%)'
           : 'radial-gradient(circle, rgba(99,102,241,0.05) 0%, transparent 70%)',
         borderRadius: '50%',
         filter: 'blur(100px)',
         animation: 'aurora 15s ease-in-out infinite'
       }} />
-      
+
       <div style={{
         position: 'absolute',
         bottom: '-10%',
         right: '-5%',
         width: '45vw',
         height: '45vw',
-        background: dark 
+        background: dark
           ? 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 60%)'
           : 'radial-gradient(circle, rgba(6,182,212,0.04) 0%, transparent 70%)',
         borderRadius: '50%',
@@ -154,13 +154,12 @@ export default function Login() {
             marginBottom: '6px',
             lineHeight: 1.15
           }}>
-            Smart Examination <span className={dark ? "text-gradient" : ""} style={dark ? {
-              background: `linear-gradient(135deg, ${card.color}, #0ea5e9)`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            } : {
-              color: '#3b82f6'
-            }}>Automated</span> System
+            Smart Examination{' '}
+            <span style={{
+              color: dark ? card.color : '#3b82f6',
+              textShadow: dark ? `0 0 30px ${card.color}70, 0 0 60px ${card.color}30` : 'none',
+              transition: 'color 0.5s ease, text-shadow 0.5s ease'
+            }}>Automated</span>{' '}System
           </h1>
           <p style={{
             color: dark ? 'rgba(255,255,255,0.6)' : '#4f46e5',
@@ -192,7 +191,7 @@ export default function Login() {
             }}>
               Select Your Role
             </p>
-            
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
               {ROLES.map((r, i) => {
                 const RI = r.icon;
@@ -233,8 +232,8 @@ export default function Login() {
                       height: '44px',
                       borderRadius: '12px',
                       flexShrink: 0,
-                      background: active 
-                        ? `linear-gradient(${r.gradient})` 
+                      background: active
+                        ? `linear-gradient(${r.gradient})`
                         : (dark ? 'rgba(255,255,255,0.06)' : '#eef2ff'),
                       display: 'flex',
                       alignItems: 'center',

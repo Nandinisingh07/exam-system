@@ -30,7 +30,7 @@ const UploadPanel = ({ onUpload }) => {
   const handleUpload = () => {
     if (!file) return;
     setUploading(true);
-    
+
     const saveDuty = async (dataUrl) => {
       try {
         await logisticsApi.addDutyDocument({ filename: file.name, data_url: dataUrl });
@@ -66,9 +66,9 @@ const UploadPanel = ({ onUpload }) => {
 
   const icon = file
     ? file.name.match(/\.(png|jpg|jpeg|webp)$/i) ? Image
-    : file.name.match(/\.pdf$/i) ? FileText
-    : file.name.match(/\.(xls|xlsx)$/i) ? File
-    : FileText
+      : file.name.match(/\.pdf$/i) ? FileText
+        : file.name.match(/\.(xls|xlsx)$/i) ? File
+          : FileText
     : Upload;
   const FileIcon = icon;
 
@@ -231,7 +231,7 @@ const ExamDutyManagement = () => {
         authApi.listUsers(),
         logisticsApi.getDutyDocuments()
       ]);
-      
+
       setDuties(Array.isArray(dRes.data) ? dRes.data : []);
       setExams(Array.isArray(eRes.data) ? eRes.data : []);
       setClassrooms(Array.isArray(cRes.data) ? cRes.data : []);

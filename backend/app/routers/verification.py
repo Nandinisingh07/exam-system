@@ -1,4 +1,4 @@
-﻿"""
+"""
 Verification Router — 3-step pipeline:
   Step 1: Face biometric (ArcFace + liveness)
   Step 2: Admit card OCR  — cross-verify enrollment, name, semester, branch

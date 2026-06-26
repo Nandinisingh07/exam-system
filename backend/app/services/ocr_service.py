@@ -86,7 +86,8 @@ def extract_raw_text_google(image_bytes: bytes) -> str:
 
         b64 = base64.b64encode(image_bytes).decode()
 
-        url = 'https://vision.googleapis.com/v1/images:annotate?key=***REMOVED***'
+        import os
+        url = f'https://vision.googleapis.com/v1/images:annotate?key={os.getenv("GOOGLE_VISION_API_KEY")}'
 
         payload = {
 

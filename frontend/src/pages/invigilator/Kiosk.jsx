@@ -610,6 +610,10 @@ export default function Kiosk() {
       }
       const data = await apiPost('/api/verify/step-admit', payload);
 
+      if (data.passed === false) {
+        setStepError(data.reason || 'Admit card verification failed. Please show card clearly.');
+        return;
+      }
       setResult(prev => ({ ...prev, ...data }));
       setStep(3);
     } catch (e) {

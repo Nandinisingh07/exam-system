@@ -236,7 +236,10 @@ FIELD_PATTERNS = {
         r"(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{4})",
     ],
     "semester": [
-        r"(?:sem|semester)[\s]*[:\-]?\s*([IVXivx\d]{1,4})",
+        r"(?:sem(?:ester)?)[\s]*[:\-]?\s*([IVXivx\d]{1,4})",
+        r"\b(I{1,3}V?|IV|VI{0,3}|VIII|VII|V)\b",
+        r"semester\s*([\d]{1,2})",
+        r"([\d]{1,2})(?:st|nd|rd|th)\s*sem",
     ],
     "branch": [
         r"(?:branch|dept|department|stream)[\s]*[:\-]?\s*([A-Za-z\s&]{2,40})",

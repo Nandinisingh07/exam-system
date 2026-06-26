@@ -262,6 +262,7 @@ async def verify_step_admit(
     fields, raw_text = extract_admit_card_fields(admit_bytes)
     elapsed_ocr = round((time.time() - t0) * 1000)
 
+    print(f"[Verify] FULL OCR TEXT: {repr(raw_text)}")
     print(f"[Verify] Step 2 OCR done in {elapsed_ocr}ms — fields: {fields}")
 
     # ── Soft pass if OCR got nothing at all ──────────────────────────────────
@@ -287,10 +288,10 @@ async def verify_step_admit(
     # Extract semester from OCR raw text using Roman numeral regex
     import re as _re
     _sem_match = _re.search(
-        r"Sem(?:ester)?[a-zA-Z]*[\s:\-]*\s*(VIII|VII|VI|IV|III|IX|II|I|\d{1,2})",
+        r"Sem(?:ester)?[a-zA-Z]*[\s:\-]*\s*(VIII|VII|VI|IV|III|IX|II|I|\d{1,2})|\b(VIII|VII|VI|IV|III|IX|II|V|I)\b",
         raw_text, _re.IGNORECASE
     )
-    ocr_sem = _sem_match.group(1).upper().strip() if _sem_match else None
+    ocr_sem = (_sem_match.group(1) or _sem_match.group(2)).upper().strip() if _sem_match else None
     
     
     student_sem = getattr(student, "semester", None)

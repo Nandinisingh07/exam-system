@@ -80,6 +80,16 @@ def extract_raw_text_cloud(image_bytes: bytes) -> str:
 
         import base64, requests
 
+        # Compress image before sending to reduce upload time
+        import cv2, numpy as np
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        if img is not None:
+            h, w = img.shape[:2]
+            if w > 1000:
+                img = cv2.resize(img, (1000, int(h * 1000 / w)))
+            _, buf = cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 85])
+            image_bytes = buf.tobytes()
         b64 = base64.b64encode(image_bytes).decode()
 
         payload = {

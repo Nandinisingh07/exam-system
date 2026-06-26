@@ -74,6 +74,52 @@ def preprocess_for_ocr(image_bytes: bytes) -> list:
     return results
 
 
+
+
+def extract_raw_text_google(image_bytes: bytes) -> str:
+
+    """Google Cloud Vision OCR - fast, accurate, 1-2s response."""
+
+    try:
+
+        import base64, requests
+
+        b64 = base64.b64encode(image_bytes).decode()
+
+        url = 'https://vision.googleapis.com/v1/images:annotate?key=***REMOVED***'
+
+        payload = {
+
+            'requests': [{
+
+                'image': {'content': b64},
+
+                'features': [{'type': 'TEXT_DETECTION', 'maxResults': 1}]
+
+            }]
+
+        }
+
+        r = requests.post(url, json=payload, timeout=10)
+
+        result = r.json()
+
+        resp = result.get('responses', [{}])[0]
+        if 'error' in resp:
+            print(f'[OCR] Google Vision API error: {resp["error"]}')
+            return ''
+        text = resp.get('fullTextAnnotation', {}).get('text', '')
+
+        print(f'[OCR] Google Vision: {len(text)} chars, preview={repr(text[:80])}')
+
+        return text.strip()
+
+    except Exception as e:
+
+        print(f'[OCR] Google Vision failed: {e}')
+
+        return ''
+
 def extract_raw_text_cloud(image_bytes: bytes) -> str:
 
     try:

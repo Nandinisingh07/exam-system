@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useTheme } from '../context/ThemeContext';
@@ -13,8 +13,9 @@ const NOTIFICATIONS = [
 
 function LiveClock() {
   const [t, setT] = useState(new Date());
+  const { dark } = useTheme();
   useEffect(() => { const id = setInterval(() => setT(new Date()), 1000); return () => clearInterval(id); }, []);
-  return <span style={{ fontSize:'12px', fontFamily:'monospace', color:'rgba(255,255,255,0.3)' }}>
+  return <span style={{ fontSize:'12px', fontFamily:'monospace', color: dark ? 'rgba(255,255,255,0.3)' : 'rgba(26,36,96,0.6)' }}>
     {t.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' })}
   </span>;
 }
@@ -76,16 +77,16 @@ export default function Layout({ children }) {
           {/* Left */}
           <div style={{ display:'flex', alignItems:'center', gap:'16px' }}>
             <div style={{ position:'relative', width:'280px' }}>
-              <Search size={14} style={{ position:'absolute', left:'13px', top:'50%', transform:'translateY(-50%)', color:'rgba(255,255,255,0.3)' }} />
+              <Search size={14} style={{ position:'absolute', left:'13px', top:'50%', transform:'translateY(-50%)', color: dark ? 'rgba(255,255,255,0.3)' : 'rgba(26,36,96,0.45)' }} />
               <input type="text" placeholder="Search students, exams, rooms..."
                 value={search} onChange={e=>setSearch(e.target.value)}
-                style={{ width:'100%', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)',
+                style={{ width:'100%', background: dark ? 'rgba(255,255,255,0.04)' : '#ffffff', border: dark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(26,36,96,0.18)',
                           borderRadius:'10px', padding:'8px 12px 8px 36px', fontSize:'13px',
-                          color:'rgba(255,255,255,0.7)', outline:'none', transition:'all 0.2s ease',
+                          color: dark ? 'rgba(255,255,255,0.7)' : '#1a2460', outline:'none', transition:'all 0.2s ease',
                           fontFamily:'inherit' }}
-                onFocus={e=>{ e.target.style.borderColor='rgba(124,58,237,0.5)'; e.target.style.background='rgba(124,58,237,0.06)'; }}
-                onBlur={e=>{ e.target.style.borderColor='rgba(255,255,255,0.08)'; e.target.style.background='rgba(255,255,255,0.04)'; }} />
-              {search && <button onClick={()=>setSearch('')} style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color:'rgba(255,255,255,0.35)', cursor:'pointer', display:'flex', alignItems:'center' }}><X size={13} /></button>}
+                onFocus={e=>{ e.target.style.borderColor='rgba(124,58,237,0.5)'; e.target.style.background= dark ? 'rgba(124,58,237,0.06)' : 'rgba(99,102,241,0.05)'; }}
+                onBlur={e=>{ e.target.style.borderColor= dark ? 'rgba(255,255,255,0.08)' : 'rgba(26,36,96,0.18)'; e.target.style.background= dark ? 'rgba(255,255,255,0.04)' : '#ffffff'; }} />
+              {search && <button onClick={()=>setSearch('')} style={{ position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', color: dark ? 'rgba(255,255,255,0.35)' : 'rgba(26,36,96,0.45)', cursor:'pointer', display:'flex', alignItems:'center' }}><X size={13} /></button>}
             </div>
             <LiveClock />
           </div>

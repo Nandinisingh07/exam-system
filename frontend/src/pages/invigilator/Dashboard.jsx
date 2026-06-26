@@ -6,6 +6,7 @@ import {
   UserCheck, WifiOff, ArrowRight, RefreshCw
 } from 'lucide-react';
 import { logisticsApi, attendanceApi } from '../../services/api';
+import { useTheme } from '../../context/ThemeContext';
 
 const STATUS_CONFIG = {
   Verified: {
@@ -16,7 +17,7 @@ const STATUS_CONFIG = {
   },
   Absent: {
     badge: 'badge-danger',
-    icon: WifiOff,
+    icon: null,
     iconColor: 'text-rose-400',
     rowBg: 'bg-rose-500/[0.02]',
   },
@@ -35,6 +36,7 @@ const STATUS_CONFIG = {
 };
 
 const InvigilatorDashboard = () => {
+  const { dark } = useTheme();
   const [duty, setDuty] = useState(null);
   const [bulkDuties, setBulkDuties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -159,9 +161,7 @@ const InvigilatorDashboard = () => {
       )}
 
       {/* ── Duty info card ── */}
-      <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20
-                      bg-gradient-to-br from-emerald-500/6 via-[#04060f] to-teal-500/4
-                      shadow-xl shadow-emerald-500/8">
+      <div className={`relative overflow-hidden rounded-2xl border ${dark ? 'border-emerald-500/20 bg-gradient-to-br from-emerald-500/6 via-[#04060f] to-teal-500/4 shadow-emerald-500/8' : 'border-emerald-500/10 bg-gradient-to-br from-emerald-500/10 via-white to-teal-500/8 shadow-emerald-500/4'} shadow-xl`}>
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500 to-teal-500" />
         <div className="p-6 relative z-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -186,7 +186,7 @@ const InvigilatorDashboard = () => {
               <div key={item.label}>
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">{item.label}</p>
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.07] flex items-center justify-center flex-shrink-0">
+                  <div className={`w-9 h-9 rounded-xl ${dark ? 'bg-white/[0.04] border-white/[0.07]' : 'bg-slate-500/8 border-slate-500/10'} flex items-center justify-center flex-shrink-0`}>
                     <item.icon size={15} className="text-slate-400" />
                   </div>
                   <div>
@@ -206,14 +206,14 @@ const InvigilatorDashboard = () => {
           { label: 'Total Students', val: duty.totalStudents, color: 'text-indigo-400', bg: 'from-indigo-500/12 to-violet-500/6', border: 'border-indigo-500/20', icon: Users },
           { label: 'Verified Present', val: duty.verified, color: 'text-emerald-400', bg: 'from-emerald-500/12 to-teal-500/6', border: 'border-emerald-500/20', icon: UserCheck },
           { label: 'Washroom Out', val: duty.washroom, color: 'text-amber-400', bg: 'from-amber-500/12 to-orange-500/6', border: 'border-amber-500/20', icon: AlertTriangle },
-          { label: 'Marked Absent', val: duty.absent, color: 'text-rose-400', bg: 'from-rose-500/12 to-pink-500/6', border: 'border-rose-500/20', icon: WifiOff },
+          { label: 'Marked Absent', val: duty.absent, color: 'text-rose-400', bg: 'from-rose-500/12 to-pink-500/6', border: 'border-rose-500/20', icon: null },
         ].map(s => {
           const Icon = s.icon;
           return (
             <div key={s.label} className={`glass-card p-5 bg-gradient-to-br ${s.bg} border ${s.border} hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5`}>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">{s.label}</p>
-                <Icon size={14} className={s.color} />
+                {Icon && <Icon size={14} className={s.color} />}
               </div>
               <p className={`text-3xl font-bold ${s.color}`} style={{ fontFamily: 'Sora, Inter, sans-serif' }}>{s.val}</p>
             </div>

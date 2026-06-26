@@ -6,6 +6,7 @@ import {
   File, Edit2, Eye, ToggleLeft, ToggleRight
 } from 'lucide-react';
 import { logisticsApi, authApi } from '../../services/api';
+import { useTheme } from '../../context/ThemeContext';
 
 const UploadPanel = ({ onUpload }) => {
   const [dragging, setDragging] = useState(false);
@@ -207,6 +208,7 @@ const ManualPanel = ({ onAssign, teachersList = [], examsList = [], roomsList = 
 };
 
 const ExamDutyManagement = () => {
+  const { dark } = useTheme();
   const [tab, setTab] = useState('duties');
   const [method, setMethod] = useState('upload');
   const [duties, setDuties] = useState([]);
@@ -359,7 +361,7 @@ const ExamDutyManagement = () => {
                   <>
                     <div style={{ padding: '10px 12px', borderRadius: '10px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', marginBottom: '16px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                       <AlertCircle size={13} style={{ color: '#818cf8', flexShrink: 0, marginTop: '1px' }} />
-                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+                      <p style={{ fontSize: '11px', color: dark ? 'rgba(255,255,255,0.5)' : '#374151', lineHeight: 1.5 }}>
                         Uploaded documents (PDF, Image, DOC, Excel) will be <strong className='duty-info-highlight'>visible to ALL registered invigilators</strong> on their dashboards.
                       </p>
                     </div>
@@ -369,8 +371,8 @@ const ExamDutyManagement = () => {
                   <>
                     <div style={{ padding: '10px 12px', borderRadius: '10px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', marginBottom: '16px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                       <CheckCircle size={13} style={{ color: '#34d399', flexShrink: 0, marginTop: '1px' }} />
-                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
-                        Manual assignments are <strong style={{ color: '#6ee7b7' }}>only visible to the selected invigilator</strong> on their personal dashboard.
+                      <p style={{ fontSize: '11px', color: dark ? 'rgba(255,255,255,0.5)' : '#374151', lineHeight: 1.5 }}>
+                        Manual assignments are <strong style={{ color: dark ? '#6ee7b7' : '#059669' }}>only visible to the selected invigilator</strong> on their personal dashboard.
                       </p>
                     </div>
                     <ManualPanel onAssign={handleAssignDone} teachersList={invigilators} examsList={exams} roomsList={classrooms} />
@@ -389,7 +391,7 @@ const ExamDutyManagement = () => {
               </div>
               <div className="relative">
                 <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input type="text" placeholder="Search…" value={search} onChange={e => setSearch(e.target.value)} className="seas-input pl-8 py-2 text-xs w-48" />
+                <input type="text" placeholder="Search…" value={search} onChange={e => setSearch(e.target.value)} style={{ paddingLeft: '32px' }} className="seas-input py-2 text-xs w-48" />
               </div>
             </div>
             <div className="overflow-x-auto">

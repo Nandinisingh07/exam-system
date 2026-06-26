@@ -80,7 +80,7 @@ const Invigilators = () => {
           </div>
           <div className="relative">
             <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-            <input type="text" placeholder="Search name or email…" value={search} onChange={e => setSearch(e.target.value)} className="seas-input pl-8 py-2 text-xs w-56" />
+            <input type="text" placeholder="Search name or email…" value={search} onChange={e => setSearch(e.target.value)} style={{ paddingLeft: '32px' }} className="seas-input py-2 text-xs w-56" />
           </div>
         </div>
 

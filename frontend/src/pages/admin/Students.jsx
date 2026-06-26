@@ -7,6 +7,7 @@ import {
   Building2, BookOpen, MapPin, Calendar, Info
 } from 'lucide-react';
 import { adminApi } from '../../services/api';
+import { useTheme } from '../../context/ThemeContext';
 
 const STATUS_CONFIG = {
   Verified:   { cls: 'badge-success',  icon: CheckCircle2 },
@@ -246,6 +247,7 @@ const AddStudentModal = ({ onClose, onAdd }) => {
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 const AdminStudents = () => {
+  const { dark } = useTheme();
   const [search, setSearch]           = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [showModal, setShowModal]     = useState(false);
@@ -314,7 +316,7 @@ const AdminStudents = () => {
             </div>
             <div>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{s.label}</p>
-              <p className="text-lg font-black text-white">{s.val}</p>
+              <p className={`text-lg font-black ${dark ? 'text-white' : 'text-slate-900'}`}>{s.val}</p>
             </div>
           </div>
         ))}
@@ -324,21 +326,29 @@ const AdminStudents = () => {
       <div className="section-card overflow-hidden">
         <div className="flex flex-wrap items-center gap-3 p-5 border-b border-white/[0.06]">
           <div className="relative flex-1 min-w-48">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} className="text-slate-500" />
             <input
               id="student-search"
               type="text"
               placeholder="Search by name, enrollment, branch..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="seas-input pl-9 py-2.5 text-xs"
+              style={{ paddingLeft: '38px' }}
+              className="seas-input py-2.5 text-xs"
             />
           </div>
-          <div className="flex items-center gap-1 p-1 bg-white/[0.03] border border-white/[0.07] rounded-xl">
+          <div 
+            style={{ 
+              background: dark ? 'rgba(255, 255, 255, 0.03)' : '#ffffff',
+              borderColor: dark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(26, 36, 96, 0.15)'
+            }}
+            className="flex items-center gap-1 p-1 border rounded-xl"
+          >
             {['All', 'Verified', 'Pending'].map(f => (
               <button key={f} onClick={() => setFilterStatus(f)}
+                style={{ color: filterStatus === f ? 'rgb(255, 255, 255)' : undefined }}
                 className={`text-[10px] px-3 py-1.5 rounded-lg font-bold transition-all uppercase tracking-wider ${
-                  filterStatus === f ? 'bg-indigo-500 text-white' : 'text-slate-500 hover:text-slate-300'
+                  filterStatus === f ? 'bg-indigo-500 text-white-force' : (dark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-600 hover:text-slate-900')
                 }`}>
                 {f}
               </button>
@@ -368,11 +378,11 @@ const AdminStudents = () => {
                   <tr key={s.id} className="group hover:bg-indigo-500/[0.02]">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/30 to-violet-500/30 flex items-center justify-center text-sm font-black text-white flex-shrink-0 border border-white/[0.08]">
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/30 to-violet-500/30 flex items-center justify-center text-sm font-black ${dark ? 'text-white' : 'text-indigo-600'} flex-shrink-0 border border-white/[0.08]`}>
                           {s.name[0]}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-white">{s.name}</p>
+                          <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-slate-900'}`}>{s.name}</p>
                           {s.college_name && <p className="text-[10px] text-slate-400 font-medium">Institution: {s.college_name}</p>}
                           <p className="text-[10px] text-slate-500">{s.email || '—'}</p>
                         </div>
@@ -385,9 +395,9 @@ const AdminStudents = () => {
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <p className="text-xs font-bold text-slate-300">{s.class_name}</p>
-                      <p className="text-[10px] text-slate-600 mt-0.5">Year {s.year} · Sem {s.semester}</p>
-                      {s.college_name && <p className="text-[10px] text-slate-700">{s.college_name}</p>}
+                      <p className={`text-xs font-bold ${dark ? 'text-slate-300' : 'text-slate-800'}`}>{s.class_name}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Year {s.year} · Sem {s.semester}</p>
+                      {s.college_name && <p className="text-[10px] text-slate-600">{s.college_name}</p>}
                     </td>
 
                     <td className="px-5 py-4">

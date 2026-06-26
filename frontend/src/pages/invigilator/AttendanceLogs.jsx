@@ -1,6 +1,7 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ClipboardCheck, Download, Search, CheckCircle, RefreshCw, ChevronDown } from "lucide-react";
 import { attendanceApi } from "../../services/api";
+import { useTheme } from "../../context/ThemeContext";
 
 const FMT_OPTS = [
   { label: "Export CSV",   fmt: "csv",   mime: "text/csv",                ext: "csv"  },
@@ -9,6 +10,7 @@ const FMT_OPTS = [
 ];
 
 const AttendanceLogs = () => {
+  const { dark } = useTheme();
   const [records, setRecords]     = useState([]);
   const [search,  setSearch]      = useState("");
   const [loading, setLoading]     = useState(false);
@@ -95,12 +97,12 @@ const AttendanceLogs = () => {
               <ChevronDown size={12} className={`transition-transform ${showFmt ? "rotate-180" : ""}`} />
             </button>
             {showFmt && (
-              <div className="absolute right-0 top-full mt-1 z-50 w-40 rounded-xl border border-white/10 bg-slate-900 shadow-xl overflow-hidden">
+              <div className={`absolute right-0 top-full mt-1 z-50 w-40 rounded-xl border ${dark ? 'border-white/10 bg-slate-900' : 'border-slate-200 bg-white'} shadow-xl overflow-hidden`}>
                 {FMT_OPTS.map(opt => (
                   <button
                     key={opt.fmt}
                     onClick={() => handleExport(opt.fmt, opt.ext, opt.mime)}
-                    className="w-full text-left px-4 py-2.5 text-xs text-slate-300 hover:bg-indigo-500/15 hover:text-white transition-colors"
+                    className={`w-full text-left px-4 py-2.5 text-xs ${dark ? 'text-slate-300 hover:text-white' : 'text-slate-700 hover:text-indigo-600'} hover:bg-indigo-500/15 transition-colors`}
                   >
                     {opt.label}
                   </button>
@@ -115,7 +117,7 @@ const AttendanceLogs = () => {
         {[
           { label: "Total Verified", val: present,        color: "text-emerald-400", border: "border-emerald-500/20", bg: "from-emerald-500/10 to-teal-500/5" },
           { label: "Total Records",  val: records.length, color: "text-indigo-400",  border: "border-indigo-500/20",  bg: "from-indigo-500/10 to-violet-500/5" },
-          { label: "Showing",        val: filtered.length,color: "text-slate-300",   border: "border-white/10",        bg: "from-white/5 to-white/3" },
+          { label: "Showing",        val: filtered.length,color: dark ? "text-slate-300" : "text-slate-700", border: dark ? "border-white/10" : "border-slate-200", bg: dark ? "from-white/5 to-white/3" : "from-slate-500/5 to-slate-500/3" },
         ].map(s => (
           <div key={s.label} className={`glass-card p-4 bg-gradient-to-br ${s.bg} border ${s.border}`}>
             <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-1">{s.label}</p>
@@ -125,13 +127,14 @@ const AttendanceLogs = () => {
       </div>
 
       <div className="relative">
-        <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+        <Search size={13} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} className="text-slate-500" />
         <input
           type="text"
           placeholder="Search by name or enrollment..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="seas-input pl-9 py-2.5 text-xs w-full"
+          style={{ paddingLeft: '38px' }}
+          className="seas-input py-2.5 text-xs w-full"
         />
       </div>
 
@@ -147,13 +150,13 @@ const AttendanceLogs = () => {
               const displayStatus = r.status === "Present" ? "Verified" : r.status;
               return (
                 <tr key={i}>
-                  <td><span className="text-xs font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2 py-1 rounded-lg">{r.seat || "—"}</span></td>
+                  <td><span className={`text-xs font-bold ${dark ? 'text-indigo-300' : 'text-indigo-600'} bg-indigo-500/10 border border-indigo-500/20 px-2 py-1 rounded-lg`}>{r.seat || "—"}</span></td>
                   <td>
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500/20 to-violet-500/10 flex items-center justify-center text-[11px] font-bold text-indigo-400 flex-shrink-0">
                         {(r.name || "?")[0]}
                       </div>
-                      <p className="text-sm font-semibold text-white">{r.name}</p>
+                      <p className={`text-sm font-semibold ${dark ? 'text-white' : 'text-slate-900'}`}>{r.name}</p>
                     </div>
                   </td>
                   <td><code className="text-xs text-slate-400 font-mono">{r.enrollment}</code></td>

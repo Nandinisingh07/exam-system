@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Menu, X as XIcon } from 'lucide-react';
 import {
@@ -13,8 +13,8 @@ const ROLE_NAV = {
     label: 'Administrator', icon: UserCog,
     accentClass: 'active',
     chipColor: 'rgba(6,182,212,0.15)', chipText: '#22d3ee', chipBorder: 'rgba(6,182,212,0.3)',
-    avatarGradient: 'linear-gradient(135deg,#0891b2,#06b6d4)',
-    logoGlow: 'rgba(6,182,212,0.5)',
+    avatarGradient: '#0ea5e9',
+    logoGlow: 'rgba(0,0,0,0)',
     sections: [
       { title:'Overview', items:[
         { name:'Dashboard',         icon:LayoutDashboard, path:'/admin/overview',    badge:null },
@@ -35,8 +35,8 @@ const ROLE_NAV = {
     label: 'Invigilator', icon: Shield,
     accentClass: 'active-emerald',
     chipColor: 'rgba(16,185,129,0.15)', chipText: '#6ee7b7', chipBorder: 'rgba(16,185,129,0.3)',
-    avatarGradient: 'linear-gradient(135deg,#059669,#10b981)',
-    logoGlow: 'rgba(16,185,129,0.5)',
+    avatarGradient: '#10b981',
+    logoGlow: 'rgba(0,0,0,0)',
     sections: [
       { title:'My Duties', items:[
         { name:'Duty Overview',     icon:LayoutDashboard, path:'/invigilator/dashboard', badge:null },
@@ -87,12 +87,9 @@ export default function Sidebar({ role, user }) {
       <div style={{ padding:'24px 20px 20px', borderBottom:'1px solid var(--border)' }}>
         <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
           <div style={{ position:'relative', flexShrink:0 }}>
-            <div style={{ position:'absolute', inset:'-4px', background:cfg.avatarGradient,
-                           borderRadius:'14px', filter:'blur(10px)', opacity:0.5 }} />
             <div style={{ position:'relative', width:'38px', height:'38px', borderRadius:'12px',
                            background:cfg.avatarGradient,
-                           display:'flex', alignItems:'center', justifyContent:'center',
-                           boxShadow:`0 4px 15px ${cfg.logoGlow}` }}>
+                           display:'flex', alignItems:'center', justifyContent:'center' }}>
               <Shield size={18} color="#fff" />
             </div>
           </div>
@@ -120,8 +117,7 @@ export default function Sidebar({ role, user }) {
           <div style={{ position:'relative', flexShrink:0 }}>
             <div style={{ width:'34px', height:'34px', borderRadius:'10px', background:cfg.avatarGradient,
                            display:'flex', alignItems:'center', justifyContent:'center',
-                           fontSize:'13px', fontWeight:700, color:'#fff',
-                           boxShadow:`0 3px 10px ${cfg.logoGlow.replace('0.5','0.4')}` }}>
+                           fontSize:'13px', fontWeight:700, color:'#fff' }}>
               {user?.name?.[0] || 'U'}
             </div>
             <div style={{ position:'absolute', bottom:'-2px', right:'-2px', width:'10px', height:'10px',

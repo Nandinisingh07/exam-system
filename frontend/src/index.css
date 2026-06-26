@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -664,7 +664,7 @@ body {
 /* ?? Page & root background ?????????????????????????????????? */
 [data-theme="light"] body,
 [data-theme="light"] #root {
-  background-color: #f3f4f6 !important;
+  background-color: #f0f6fc !important;
   color: #1e1b4b !important;
 }
 
@@ -1166,3 +1166,14 @@ body {
 [data-theme="light"] aside h1,
 [data-theme="light"] aside .text-sm.font-bold { color: #ffffff !important; }
 [data-theme="light"] aside p.text-xs { color: rgba(255,255,255,0.55) !important; }
+
+/* Force white text class and active filter tab visibility */
+.text-white-force {
+  color: #ffffff !important;
+}
+[data-theme="light"] button.bg-indigo-500,
+[data-theme="light"] button.bg-indigo-500 *,
+[data-theme="light"] button.text-white-force,
+[data-theme="light"] .uppercase.tracking-wider.text-white-force {
+  color: #ffffff !important;
+}
